@@ -1,0 +1,47 @@
+name: Test and build
+on:
+  push:
+  pull_request:
+
+env:
+  XC8_VERSION: "3.10"
+  PROFILE: "default"
+  PACK_FOLDER: "/opt/microchip/packs"
+
+jobs:
+  build-firmware:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: usimd/setup-xc-action@v1
+        with:
+          compiler: xc8
+          version: ${{env.XC8_VERSION}}  
+
+      - name: Run build
+        working-directory: firmware
+        run: |
+          # Download profile packs to folder
+          sudo mkdir -p /${{ env.PACK_FOLDER }}
+          sudo chown $USER /${{ env.PACK_FOLDER }}
+          jq -r '.configurations[] | select(.name=="${{ env.PROFILE }}") | .packs[] | ("https://packs.download.microchip.com/" + .vendor + "." + .name + "." + .version + ".atpack" + "\n" + .vendor + "/" + .name + "/" + .version)' .vscode/remote.mplab.json | xargs -n2 sh -c 'curl --create-dirs -LO --output-dir /${{ env.PACK_FOLDER }}/$1 $0 && unzip -qq /${{ env.PACK_FOLDER }}/$1/* -d /${{ env.PACK_FOLDER }}/$1'
+          
+          cmake -G Ninja -S cmake/remote/${{ env.PROFILE }} --preset remote_default_conf --fresh -DPACK_REPO_PATH=${{ env.PACK_FOLDER }}
+          cmake --build _build/remote/default -v --parallel
+
+  kicad-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: sparkengineering/kicad-action@v4
+        with:
+          kicad_sch: water-meter-counter.kicad_sch
+          sch_pdf: true
+          sch_bom: true
+          sch_erc: true
+          pcb_drc: true
+          kicad_pcb: water-meter-counter.kicad_pcb
+          pcb_gerbers: true  
+

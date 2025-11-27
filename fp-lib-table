@@ -1,0 +1,4 @@
+(fp_lib_table
+  (version 7)
+  (lib (name "Inductor_Fastron_THT")(type "KiCad")(uri "${KIPRJMOD}/lib/Inductor_Fastron_THT.pretty")(options "")(descr ""))
+)
