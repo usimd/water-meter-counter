@@ -4,5 +4,5 @@ dist/
 nbproject
 out/
 debug/
-cmake/
+cmake/**/.generated/
 .vscode/*-local.json
