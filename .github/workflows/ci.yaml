@@ -27,6 +27,7 @@ jobs:
           sudo chown $USER /${{ env.PACK_FOLDER }}
           jq -r '.configurations[] | select(.name=="${{ env.PROFILE }}") | .packs[] | ("https://packs.download.microchip.com/" + .vendor + "." + .name + "." + .version + ".atpack" + "\n" + .vendor + "/" + .name + "/" + .version)' .vscode/water-meter-counter.mplab.json | xargs -n2 sh -c 'curl --create-dirs -LO --output-dir /${{ env.PACK_FOLDER }}/$1 $0 && unzip -qq /${{ env.PACK_FOLDER }}/$1/* -d /${{ env.PACK_FOLDER }}/$1'
           
+          export CMAKE_GENERATOR=Ninja
           cmake -G Ninja -S cmake/water-meter-counter/${{ env.PROFILE }} -B _build/water-meter-counter/default --preset water_meter_counter_default_conf --fresh -DPACK_REPO_PATH=${{ env.PACK_FOLDER }}
           cmake --build _build/water-meter-counter/default -v --parallel
 
