@@ -7,9 +7,9 @@
  * 
  * @brief This file contains the API Implementation for the Device Configuration Bits driver.
  *
- * @version Driver Version 2.0.2
+ * @version Driver Version 1.0.1
  *
- * @version Package Version 4.1.4
+ * @version Package Version 1.0.3
 */
 
 /*
@@ -35,37 +35,66 @@
 
 // Configuration bits: selected in the GUI
 
-//CONFIG1
-#pragma config FEXTOSC = OFF     // External Oscillator mode selection bits->Oscillator not enabled
-#pragma config RSTOSC = HFINT32     // Power-up default value for COSC bits->HFINTOSC with OSCFRQ= 32 MHz and CDIV = 1:1
-#pragma config CLKOUTEN = OFF     // Clock Out Enable bit->CLKOUT function is disabled; i/o or oscillator function on OSC2
-#pragma config CSWEN = ON     // Clock Switch Enable bit->Writing to NOSC and NDIV is allowed
-#pragma config FCMEN = ON     // Fail-Safe Clock Monitor Enable bit->FSCM timer enabled
+//CONFIG1L
+#pragma config RETEN = ON    // VREG Sleep Enable bit->Ultra low-power regulator is Enabled (Controlled by SRETEN bit)
+#pragma config INTOSCSEL = HIGH    // LF-INTOSC Low-power Enable bit->LF-INTOSC in High-power mode during Sleep
+#pragma config SOSCSEL = HIGH    // SOSC Power Selection and mode Configuration bits->High Power SOSC circuit selected
+#pragma config XINST = OFF    // Extended Instruction Set->Disabled
 
-//CONFIG2
-#pragma config MCLRE = ON     // Master Clear Enable bit->MCLR pin is Master Clear function
-#pragma config PWRTE = OFF     // Power-up Timer Enable bit->PWRT disabled
-#pragma config LPBOREN = OFF     // Low-Power BOR enable bit->ULPBOR disabled
-#pragma config BOREN = ON     // Brown-out reset enable bits->Brown-out Reset Enabled, SBOREN bit is ignored
-#pragma config BORV = LO     // Brown-out Reset Voltage Selection->Brown-out Reset Voltage (VBOR) set to 1.9V on LF, and 2.45V on F Devices
-#pragma config ZCD = OFF     // Zero-cross detect disable->Zero-cross detect circuit is disabled at POR.
-#pragma config PPS1WAY = ON     // Peripheral Pin Select one-way control->The PPSLOCK bit can be cleared and set only once in software
-#pragma config STVREN = ON     // Stack Overflow/Underflow Reset Enable bit->Stack Overflow or Underflow will cause a reset
+//CONFIG1H
+#pragma config FOSC = INTIO2    // Oscillator Selection bits->Internal RC oscillator
+#pragma config FCMEN = OFF    // Fail-Safe Clock Monitor Enable bit->Disabled
+#pragma config IESO = OFF    // Internal/External Oscillator Switchover bit->Disabled
+#pragma config PLLCFG = OFF    // 4X PLL Enable->Disabled
 
-//CONFIG3
-#pragma config WDTCPS = WDTCPS_31     // WDT Period Select bits->Divider ratio 1:65536; software control of WDTPS
-#pragma config WDTE = OFF     // WDT operating mode->WDT Disabled, SWDTEN is ignored
-#pragma config WDTCWS = WDTCWS_7     // WDT Window Select bits->window always open (100%); software control; keyed access not required
-#pragma config WDTCCS = SC     // WDT input clock selector->Software Control
+//CONFIG2L
+#pragma config PWRTEN = OFF    // Power-up Timer Enable bit->Disabled
+#pragma config BOREN = SBORDIS    // Brown-out Reset Enable bits->Enabled in hardware, SBOREN disabled
+#pragma config BORV = 0    // Brown Out Reset Voltage bits->3.0V
+#pragma config BORPWR = ZPBORMV    // BORMV Power level->ZPBORMV instead of BORMV is selected
 
-//CONFIG4
-#pragma config WRT = OFF     // UserNVM self-write protection bits->Write protection off
-#pragma config SCANE = available     // Scanner Enable bit->Scanner module is available for use
-#pragma config LVP = ON     // Low Voltage Programming Enable bit->Low Voltage programming enabled. MCLR/Vpp pin function is MCLR.
+//CONFIG2H
+#pragma config WDTEN = NOSLP    // Watchdog Timer Enable bits->WDT enabled only while device is active and disabled in Sleep mode; SWDTEN bit disabled
+#pragma config WDTPS = 1048576    // Watchdog Timer Postscale Select bits->1:1048576
 
-//CONFIG5
-#pragma config CP = OFF     // UserNVM Program memory code protection bit->Program Memory code protection disabled
-#pragma config CPD = OFF     // DataNVM code protection bit->Data EEPROM code protection disabled
+//CONFIG3H
+#pragma config MCLRE = ON    // MCLR Pin Enable bit->MCLR Enabled, RE3 Disabled
+#pragma config CANMX = PORTB    // ECAN Mux bit->PORTB
+#pragma config MSSPMSK = MSK7    // MSSP address masking->7 Bit address masking mode
+
+//CONFIG4L
+#pragma config STVREN = ON    // Stack Full/Underflow Reset Enable bit->Enabled
+#pragma config BBSIZ = BB2K    // Boot Block Size Select bit->2K word Boot Block size
+
+//CONFIG5L
+#pragma config CP0 = OFF    // Code Protection Block 0->Disabled
+#pragma config CP1 = OFF    // Code Protection Block 1->Disabled
+#pragma config CP2 = OFF    // Code Protection Block 2->Disabled
+#pragma config CP3 = OFF    // Code Protection Block 3->Disabled
+
+//CONFIG5H
+#pragma config CPB = OFF    // Boot Block Code Protection bit->Disabled
+#pragma config CPD = OFF    // Data EEPROM Code Protection bit->Disabled
+
+//CONFIG6L
+#pragma config WRT0 = OFF    // Write Protection Block 0->Disabled
+#pragma config WRT1 = OFF    // Write Protection Block 1->Disabled
+#pragma config WRT2 = OFF    // Write Protection Block 2->Disabled
+#pragma config WRT3 = OFF    // Write Protection Block 3->Disabled
+
+//CONFIG6H
+#pragma config WRTC = OFF    // Configuration Register Write Protection bit->Disabled
+#pragma config WRTB = OFF    // Boot Block Write Protection bit->Disabled
+#pragma config WRTD = OFF    // Data EEPROM Write Protection bit->Disabled
+
+//CONFIG7L
+#pragma config EBTR0 = OFF    // Table Read Protection Block 0->Disabled
+#pragma config EBTR1 = OFF    // Table Read Protection Block 1->Disabled
+#pragma config EBTR2 = OFF    // Table Read Protection Block 2->Disabled
+#pragma config EBTR3 = OFF    // Table Read Protection Block 3->Disabled
+
+//CONFIG7H
+#pragma config EBTRB = OFF    // Boot Block Table Read Protection bit->OFF
 
 /**
  End of File

@@ -4,6 +4,11 @@
 	(generator_version "9.0")
 	(uuid "02737bdf-c74e-4088-88b4-a9c29b69aa80")
 	(paper "A5")
+	(title_block
+		(title "Water meter counter")
+		(rev "${Revision}")
+		(comment 3 "Inductive water meter counter with S0 interface for GSB-8 style meters")
+	)
 	(lib_symbols
 		(symbol "Connector:Conn_PIC_ICSP_ICD"
 			(exclude_from_sim no)
@@ -5688,7 +5693,7 @@
 		(at 60.96 38.1 0)
 		(unit 1)
 		(exclude_from_sim no)
-		(in_bom yes)
+		(in_bom no)
 		(on_board yes)
 		(dnp no)
 		(uuid "83794457-5aa4-447b-95e5-f4b822b99b25")

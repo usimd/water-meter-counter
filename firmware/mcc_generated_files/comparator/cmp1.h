@@ -1,13 +1,13 @@
 /**
- * CMP2 Generated Driver API Header File.
+ * CMP1 Generated Driver API Header File.
  * 
- * @file cmp2.h
+ * @file cmp1.h
  * 
- * @defgroup cmp2 CMP2
+ * @defgroup cmp1 CMP1
  * 
- * @brief This file contains the API prototypes for the CMP2 module.
+ * @brief This file contains the API prototypes for the CMP1 module.
  *
- * @version CMP2 Driver Version 1.0.0
+ * @version CMP1 Driver Version 1.0.0
 */ 
  /*
 © [2025] Microchip Technology Inc. and its subsidiaries.
@@ -30,8 +30,8 @@
     THIS SOFTWARE.
 */
 
-#ifndef CMP2_H
-#define CMP2_H
+#ifndef CMP1_H
+#define CMP1_H
 
  /**
    Section: Included Files
@@ -40,65 +40,65 @@
 #include <stdint.h>
 #include <stdbool.h>
 
-#define CMP2_Initialize CMP2_Initialize
-#define CMP2_Enable CMP2_Enable
-#define CMP2_Disable  CMP2_Disable
-#define CMP2_ISR  CMP2_ISR
-#define CMP2_GetOutputStatus  CMP2_GetOutputStatus
-#define CMP2_InterruptCallbackRegister  CMP2_InterruptCallbackRegister
+#define CMP1_Initialize CMP1_Initialize
+#define CMP1_Enable CMP1_Enable
+#define CMP1_Disable  CMP1_Disable
+#define CMP1_ISR  CMP1_ISR
+#define CMP1_GetOutputStatus  CMP1_GetOutputStatus
+#define CMP1_InterruptCallbackRegister  CMP1_InterruptCallbackRegister
 
 /**
-  Section: CMP2 APIs
+  Section: CMP1 APIs
 */
 
 /**
- * @ingroup cmp2
- * @brief Initializes the CMP2 module. This is called only once during system initialization, and before calling other CMP2 APIs.
+ * @ingroup cmp1
+ * @brief Initializes the CMP1 module. This is called only once during system initialization, and before calling other CMP1 APIs.
  * @param None.
  * @return None.
  */
-void CMP2_Initialize(void);
+void CMP1_Initialize(void);
 
 /**
- * @ingroup cmp2
- * @brief Enables the CMP2 module.     
+ * @ingroup cmp1
+ * @brief Enables the CMP1 module.     
  * @param None.
  * @return None.
  */
-void CMP2_Enable(void);
+void CMP1_Enable(void);
 
 /**
- * @ingroup cmp2
- * @brief Disables the CMP2 module.     
+ * @ingroup cmp1
+ * @brief Disables the CMP1 module.     
  * @param None.
  * @return None.
  */
-void CMP2_Disable(void);
+void CMP1_Disable(void);
 
 /**
- * @ingroup cmp2
- * @brief Returns the CMP2 output status.
- * @pre CMP2_Initialize() is already called.
+ * @ingroup cmp1
+ * @brief Returns the CMP1 output status.
+ * @pre CMP1_Initialize() is already called.
  * @param None.
- * @retval True - CMP2 output is high.
- * @retval False - CMP2 output is low.
+ * @retval True - CMP1 output is high.
+ * @retval False - CMP1 output is low.
  */
-bool CMP2_GetOutputStatus(void); 
+bool CMP1_GetOutputStatus(void); 
 
 /**
- * @ingroup cmp2
+ * @ingroup cmp1
  * @brief Implements the Interrupt Service Routine (ISR) for the CMP interrupt.
  * @param None.
  * @return None.
  */
-void CMP2_ISR(void);
+void CMP1_ISR(void);
 
 /**
- * @ingroup cmp2
+ * @ingroup cmp1
  * @brief Setter function for comparator interrupt callback.
  * @param CallbackHandler - Pointer to the custom callback.
  * @return None.
  */
-void CMP2_InterruptCallbackRegister(void(*callbackHandler)(void));
+void CMP1_InterruptCallbackRegister(void(*callbackHandler)(void));
 
-#endif // CMP2_H
+#endif // CMP1_H

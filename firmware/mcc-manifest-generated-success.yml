@@ -2,30 +2,32 @@
 
 manifest_file_version: 1.0.0
 project: water-meter-counter
-creation_date: 2025-11-24T23:56:28.564+01:00[Europe/Berlin]
+creation_date: 2025-12-16T18:51:29.178+01:00[Europe/Berlin]
 operating_system: Linux
-mcc_mode: IDE
-mcc_mode_version: v6.20
-device_name: PIC16F18854
-compiler: XC8 3.10
-mcc_version: 5.5.1
-mcc_core_version: 5.7.1
-content_manager_version: 5.0.1
+mcc_mode: VSCodePlugin
+mcc_mode_version: Unknown
+device_name: PIC18F25K80
+compiler: N/A
+mcc_version: 5.6.3
+mcc_core_version: 5.8.3
+content_manager_version: 6.0.3
 is_mcc_offline: false
 is_using_prerelease_versions: false
 mcc_content_registries: https://registry.npmjs.org/
 device_library: {library_class: com.microchip.mcc.melody.Library, name: Melody, version: 2.10.0}
-packs: {name: PIC16F1xxxx_DFP, version: 1.28.431}
+packs: {name: N/A, version: N/A}
 modules:
+- {name: '@mchp-mcc/default-peripheral-initializer', type: MELODY, version: 3.2.5}
 - {name: '@mchp-mcc/example-uart', type: MELODY, version: 1.0.0}
 - {name: '@mchp-mcc/main-manager', type: MELODY, version: 3.1.2}
 - {name: '@mchp-mcc/pic-8bit', type: MELODY, version: 5.29.1}
-- {name: '@mchp-mcc/pic16-configuration-bits-v1', type: MELODY, version: 4.1.4}
-- {name: '@mchp-mcc/pic16-pin-manager', type: MELODY, version: 3.6.3}
+- {name: '@mchp-mcc/pic18-configuration-bits-v8', type: MELODY, version: 1.0.3}
+- {name: '@mchp-mcc/pic18-pin-manager', type: MELODY, version: 3.7.1}
 - {name: '@mchp-mcc/pin-content-processor', type: MELODY, version: 3.11.0}
-- {name: '@mchp-mcc/scf-pic8-cmp-v1', type: MELODY, version: 4.2.0}
+- {name: '@mchp-mcc/scf-pic8-cmp-v2', type: MELODY, version: 1.0.1}
 - {name: '@mchp-mcc/scf-pic8-eusart-v1', type: MELODY, version: 7.1.8}
-- {name: '@mchp-mcc/scf-pic8-fvr-v1', type: MELODY, version: 4.1.0}
-- {name: '@mchp-mcc/scf-pic8-interrupt-v2', type: MELODY, version: 5.2.12}
-- {name: '@mchp-mcc/scf-pic8-osc-v1', type: MELODY, version: 4.4.0}
+- {name: '@mchp-mcc/scf-pic8-interrupt-v4', type: MELODY, version: 1.0.2}
+- {name: '@mchp-mcc/scf-pic8-osc-v6', type: MELODY, version: 1.0.5}
+- {name: '@mchp-mcc/scf-pic8-tmr0-v3', type: MELODY, version: 2.0.0}
+- {name: '@mchp-mcc/timer', type: MELODY, version: 1.2.3}
 - {name: '@mchp-mcc/uart-driver', type: MELODY, version: 1.10.2}

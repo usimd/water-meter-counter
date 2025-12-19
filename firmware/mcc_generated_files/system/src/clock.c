@@ -5,11 +5,11 @@
  * 
  * @ingroup clockdriver 
  * 
- * @brief This file contains the API prototypes for the Clock driver.
+ * @brief This file contains the API implementation for the Clock driver.
  *
- * @version Driver Version 2.0.4
+ * @version Driver Version 1.0.1
  *
- * @version Package Version 4.3.7
+ * @version Package Version 1.0.5 
 */
 
 /*
@@ -38,20 +38,20 @@
 
 void CLOCK_Initialize(void)
 {
-    // Set the CLOCK CONTROL module to the options selected in the user interface.
-    OSCCON1 = (0 << _OSCCON1_NDIV_POSN)   // NDIV 1
-        | (6 << _OSCCON1_NOSC_POSN);  // NOSC HFINTOSC
-    OSCCON3 = (0 << _OSCCON3_SOSCPWR_POSN)   // SOSCPWR Low power
-        | (0 << _OSCCON3_CSWHOLD_POSN);  // CSWHOLD may proceed
-    OSCEN = (0 << _OSCEN_EXTOEN_POSN)   // EXTOEN disabled
-        | (0 << _OSCEN_HFOEN_POSN)   // HFOEN disabled
-        | (0 << _OSCEN_MFOEN_POSN)   // MFOEN disabled
-        | (0 << _OSCEN_LFOEN_POSN)   // LFOEN disabled
-        | (0 << _OSCEN_SOSCEN_POSN)   // SOSCEN disabled
-        | (0 << _OSCEN_ADOEN_POSN);  // ADOEN disabled
-    OSCFRQ = (6 << _OSCFRQ_HFFRQ_POSN);  // HFFRQ 32_MHz
-    OSCTUNE = (32 << _OSCTUNE_HFTUN_POSN);  // HFTUN 0x20
-
+    OSCCON = (2 << _OSCCON_SCS_POSN)   // SCS INTOSC
+        | (0 << _OSCCON_HFIOFS_POSN)   // HFIOFS not stable
+        | (7 << _OSCCON_IRCF_POSN)   // IRCF 16MHz_HF
+        | (0 << _OSCCON_IDLEN_POSN);  // IDLEN disabled
+    OSCCON2 = (0 << _OSCCON2_SOSCGO_POSN)   // SOSCGO disabled
+        | (0 << _OSCCON2_MFIOSEL_POSN)   // MFIOSEL disabled
+        | (0 << _OSCCON2_SOSCDRV_POSN);  // SOSCDRV Low Power
+    OSCTUNE = (0 << _OSCTUNE_TUN_POSN)   // TUN 0x0
+        | (0 << _OSCTUNE_PLLEN_POSN)   // PLLEN disabled
+        | (0 << _OSCTUNE_INTSRC_POSN);  // INTSRC INTRC
+    REFOCON = (0 << _REFOCON_ROON_POSN)   // ROON disabled
+        | (0 << _REFOCON_ROSSLP_POSN)   // ROSSLP Disabled in Sleep mode
+        | (0 << _REFOCON_ROSEL_POSN)   // ROSEL System Clock(FOSC)
+        | (0 << _REFOCON_RODIV_POSN);  // RODIV Fosc
 }
 /**
  End of File

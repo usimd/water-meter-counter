@@ -1,20 +1,5 @@
-/**
- * CLOCK Generated Driver Header File 
- * 
- * @file clock.h
- * 
- * @defgroup clockdriver Clock Driver
- * 
- * @brief This file contains the API prototypes and other data types for the Clock driver.
- *
- * @version Driver Version 1.0.1
- *
- * @version Package Version 1.0.5 
- *
-*/
-
 /*
-© [2025] Microchip Technology Inc. and its subsidiaries.
+ï¿½ [2025] Microchip Technology Inc. and its subsidiaries.
 
     Subject to your compliance with these terms, you may use Microchip 
     software and any derivatives exclusively with Microchip products. 
@@ -34,28 +19,12 @@
     THIS SOFTWARE.
 */
 
-#ifndef CLOCK_H
-#define	CLOCK_H
+#include <xc.h>
+#include "../cvref.h"
 
-#ifndef _XTAL_FREQ
-/**
-    @ingroup clock control 
-    @def system frequency
-    @misradeviation{@required, 21.1} Defining the system frequency using the _XTAL_FREQ macro is required by the XC8 compiler for the built-in delay functions.
-*/
-/* cppcheck-suppress misra-c2012-21.1 */
-#define _XTAL_FREQ 16000000U
-#endif
-
-/**
- * @ingroup clockdriver
- * @brief Initializes all the internal oscillator sources and clock switch configurations.
- * @param None.
- * @return None. 
- */
-void CLOCK_Initialize(void);
-
-#endif	/* CLOCK_H */
-/**
- End of File
-*/
+// Set the CVREF module to the options selected in the user interface.
+void CVREF_Initialize(void) {
+    // CVREN enabled; CVROE disabled; CVRSS (Vdd)-(Vss),CVoffset=Vss; CVR 15 (generates ~2.5V);
+    // Formula: Vref = (CVR + 1) * 5V / 32 = (15+1)*5/32 = 2.5V
+    CVRCON = 0x9F;  // 0x9F = 0b10011111: CVREN=1, CVROE=0, CVRSS=0, CVR=15
+}

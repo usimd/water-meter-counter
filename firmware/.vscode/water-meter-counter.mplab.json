@@ -1,0 +1,170 @@
+{
+    "version": "1.8",
+    "importedFrom": "./",
+    "configurations": [
+        {
+            "name": "default",
+            "id": "",
+            "device": "PIC18F25K80",
+            "imageType": "application",
+            "imagePath": "./out/water-meter-counter/default.elf",
+            "toolProperties": "default-tool",
+            "tool": "PICkit 5",
+            "packs": [
+                {
+                    "name": "PIC18F-K_DFP",
+                    "vendor": "Microchip",
+                    "version": "1.15.303"
+                }
+            ],
+            "fileSet": "Project files",
+            "toolchain": "default-XC8"
+        }
+    ],
+    "propertyGroups": [
+        {
+            "name": "default-XC8",
+            "type": "toolchain",
+            "provider": "microchip.toolchains:xc8@3.10",
+            "properties": {
+                "HI-TECH-COMP.extra-include-directories": [
+                    "\".\""
+                ],
+                "HI-TECH-COMP.asmlist": true,
+                "HI-TECH-COMP.optimization-level": "-O0",
+                "HI-TECH-COMP.optimization-assembler-files": true,
+                "HI-TECH-COMP.tentative-definitions": "-fno-common",
+                "HI-TECH-LINK.input-libraries": [
+                    "m"
+                ],
+                "HI-TECH-LINK.extra-lib-directories": [
+                    "\".\""
+                ],
+                "HI-TECH-LINK.fill-flash-options-how": "0",
+                "HI-TECH-LINK.fill-flash-options-seq": "",
+                "HI-TECH-COMP.disable-optimizations": true,
+                "HI-TECH-COMP.favor-optimization-for": "-speed,+space",
+                "HI-TECH-COMP.identifier-length": "255",
+                "HI-TECH-COMP.operation-mode": "free",
+                "HI-TECH-COMP.opt-xc8-compiler-strict_ansi": false,
+                "HI-TECH-COMP.optimization-assembler": true,
+                "HI-TECH-COMP.optimization-invariant-enable": false,
+                "HI-TECH-COMP.optimization-invariant-value": "16",
+                "HI-TECH-COMP.optimization-speed": false,
+                "HI-TECH-COMP.optimization-stable-enable": false,
+                "HI-TECH-COMP.use-iar": false,
+                "HI-TECH-LINK.additional-options-trace-type": "",
+                "HI-TECH-LINK.additional-options-use-response-files": false,
+                "HI-TECH-LINK.clear-bss": true,
+                "HI-TECH-LINK.create-html-files": false,
+                "HI-TECH-LINK.data-model-size-of-double": "32",
+                "HI-TECH-LINK.data-model-size-of-float": "32",
+                "HI-TECH-LINK.link-in-c-library": true,
+                "HI-TECH-LINK.link-in-peripheral-library": false,
+                "XC8-config-global.advanced-elf": true,
+                "XC8-config-global.gcc-opt-driver-new": true,
+                "XC8-config-global.omit-pack-options": false,
+                "XC8-config-global.output-file-format": "-mcof,+elf",
+                "compiler.isolate-each-function": true,
+                "compiler.optimization-level": "-O1",
+                "compiler.place-data-into-section": true,
+                "linker.heap-size": "0",
+                "linker.remove-unused-sections": true,
+                "compiler++.isolate-each-function": true,
+                "compiler++.optimization-level": "-O1"
+            }
+        },
+        {
+            "name": "default-tool",
+            "type": "tool",
+            "properties": {
+                "AutoSelectMemRanges": "auto",
+                "Freeze Peripherals": true,
+                "SecureSegment.SegmentProgramming": "FullChipProgramming",
+                "ToolFirmwareFilePath": "Press to browse for a specific firmware version",
+                "ToolFirmwareOption.UseLatestFirmware": true,
+                "debugoptions.debug-startup": "Use system settings",
+                "debugoptions.reset-behaviour": "Use system settings",
+                "debugoptions.useswbreakpoints": false,
+                "event.recorder.debugger.behavior": "Running",
+                "event.recorder.enabled": false,
+                "event.recorder.scvd.files": "",
+                "hwtoolclock.frcindebug": false,
+                "lastid": "",
+                "memories.aux": false,
+                "memories.bootflash": true,
+                "memories.configurationmemory": true,
+                "memories.configurationmemory2": true,
+                "memories.dataflash": true,
+                "memories.eeprom": true,
+                "memories.flashdata": true,
+                "memories.id": true,
+                "memories.instruction.ram": true,
+                "memories.instruction.ram.ranges": "${memories.instruction.ram.ranges}",
+                "memories.programmemory": true,
+                "memories.programmemory.ranges": "0-7fff",
+                "poweroptions.powerenable": false,
+                "programmertogo.imagename": "",
+                "programoptions.donoteraseauxmem": false,
+                "programoptions.eraseb4program": true,
+                "programoptions.pgmspeed": "2",
+                "programoptions.preservedataflash": false,
+                "programoptions.preservedataflash.ranges": "${programoptions.preservedataflash.ranges}",
+                "programoptions.preserveeeprom": false,
+                "programoptions.preserveeeprom.ranges": "0-3ff",
+                "programoptions.preserveprogram.ranges": "",
+                "programoptions.preserveprogramrange": false,
+                "programoptions.preserveuserid": false,
+                "programoptions.programcalmem": false,
+                "programoptions.programuserotp": false,
+                "programoptions.testmodeentrymethod": "VDDFirst",
+                "programoptions.usehighvoltageonmclr": false,
+                "programoptions.uselvpprogramming": true,
+                "voltagevalue": "5.0"
+            }
+        }
+    ],
+    "fileSets": [
+        {
+            "name": "Project files",
+            "files": [
+                "Makefile",
+                "mcc_generated_files/comparator/**/*",
+                "mcc_generated_files/peripheral/**/*",
+                "mcc_generated_files/system/**/*",
+                "mcc_generated_files/timer/**/*",
+                "mcc_generated_files/uart/**/*",
+                "*.h",
+                "*.c",
+                "*.mc3",
+                "mcc_generated_files/examples/UART_Example/*",
+                "mcc_generated_files/peripheral/cvref.h",
+                "mcc_generated_files/peripheral/src/cvref.c",
+                "mcc_generated_files/system/interrupt.h",
+                "mcc_generated_files/system/src/interrupt.c",
+                "mcc_generated_files/system/clock.h",
+                "mcc_generated_files/system/src/clock.c",
+                "mcc_generated_files/timer/tmr0.h",
+                "mcc_generated_files/timer/timer_interface.h",
+                "mcc_generated_files/timer/src/tmr0.c",
+                "mcc_generated_files/examples/UART_Example/uart_example.c",
+                "mcc_generated_files/system/system.h",
+                "mcc_generated_files/system/src/system.c",
+                "mcc_generated_files/system/src/config_bits.c",
+                "mcc_generated_files/system/config_bits.h",
+                "main.c",
+                "mcc_generated_files/system/pins.h",
+                "mcc_generated_files/system/src/pins.c",
+                "mcc_generated_files/uart/uart_types.h",
+                "mcc_generated_files/uart/eusart1.h",
+                "mcc_generated_files/uart/src/eusart1.c",
+                "mcc_generated_files/uart/uart_drv_interface.h",
+                "mcc_generated_files/comparator/cmp1.h",
+                "mcc_generated_files/comparator/src/cmp1.c",
+                "mcc_generated_files/comparator/src/cmp2.c",
+                "mcc_generated_files/comparator/cmp2.h"
+            ],
+            "encoding": "ISO-8859-1"
+        }
+    ]
+}

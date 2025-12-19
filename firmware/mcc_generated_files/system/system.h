@@ -7,9 +7,9 @@
  * 
  * @brief This file contains the API prototype for the System Driver.
  *
- * @version Driver Version 2.0.3
+ * @version Driver Version 1.0.1
  *
- * @version Package Version 4.1.4
+ * @version Package Version 1.0.3
 */
 
 /*
@@ -41,11 +41,13 @@
 #include <stdbool.h>
 #include "config_bits.h"
 #include "../system/pins.h"
+#include "../comparator/cmp1.h"
 #include "../comparator/cmp2.h"
-#include "../uart/eusart.h"
-#include "../fvr/fvr.h"
+#include "../peripheral/cvref.h"
+#include "../uart/eusart1.h"
 #include "../system/interrupt.h"
 #include "../system/clock.h"
+#include "../timer/tmr0.h"
 
 /**
  * @ingroup systemdriver

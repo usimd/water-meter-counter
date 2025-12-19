@@ -8,11 +8,11 @@
  * @brief This is generated driver implementation for pins. 
  *        This file provides implementations for pin APIs for all pins selected in the GUI.
  *
- * @version Driver Version 3.0.0
+ * @version Driver Version 3.1.1
 */
 
 /*
-© [2025] Microchip Technology Inc. and its subsidiaries.
+ï¿½ [2025] Microchip Technology Inc. and its subsidiaries.
 
     Subject to your compliance with these terms, you may use Microchip 
     software and any derivatives exclusively with Microchip products. 
@@ -43,77 +43,50 @@ void PIN_MANAGER_Initialize(void)
     LATA = 0x0;
     LATB = 0x0;
     LATC = 0x40;
+    /**
+    ODx registers
+    */
 
     /**
     TRISx registers
     */
-    TRISA = 0xFF;
-    TRISB = 0xFF;
-    TRISC = 0xB7;
+    TRISA = 0xEF;
+    TRISB = 0xFB;
+    TRISC = 0x9E;
 
     /**
     ANSELx registers
     */
-    ANSELA = 0xFF;
-    ANSELB = 0xFF;
-    ANSELC = 0x37;
 
     /**
     WPUx registers
     */
-    WPUA = 0x0;
     WPUB = 0x0;
-    WPUC = 0x0;
-    WPUE = 0x0;
-  
-    /**
-    ODx registers
-    */
-   
-    ODCONA = 0x0;
-    ODCONB = 0x0;
-    ODCONC = 0x0;
+
+
     /**
     SLRCONx registers
     */
-    SLRCONA = 0xFF;
-    SLRCONB = 0xFF;
-    SLRCONC = 0xFF;
+
     /**
     INLVLx registers
     */
-    INLVLA = 0xFF;
-    INLVLB = 0xFF;
-    INLVLC = 0xFF;
-    INLVLE = 0x8;
 
+   /**
+    RxyI2C | RxyFEAT registers   
+    */
     /**
     PPS registers
-    */
-    RXPPS = 0x17; //RC7->EUSART:RX;
-    RC6PPS = 0x10;  //RC6->EUSART:TX;
-
-    /**
-    APFCON registers
     */
 
    /**
     IOCx registers 
     */
-    IOCAP = 0x0;
-    IOCAN = 0x0;
-    IOCAF = 0x0;
-    IOCBP = 0x0;
-    IOCBN = 0x0;
-    IOCBF = 0x0;
-    IOCCP = 0x0;
-    IOCCN = 0x0;
-    IOCCF = 0x0;
-    IOCEP = 0x0;
-    IOCEN = 0x0;
-    IOCEF = 0x0;
+    IOCB = 0x0;
 
 
+    // Enable INTCONbits.RBIE interrupt 
+    INTCONbits.RBIE = 1; 
 }
   
 void PIN_MANAGER_IOC(void)

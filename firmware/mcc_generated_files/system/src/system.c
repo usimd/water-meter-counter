@@ -7,9 +7,9 @@
  * 
  * @brief This file contains the API implementation for the System driver.
  *
- * @version Driver Version 2.0.3
+ * @version Driver Version 1.0.1
  *
- * @version Package Version 4.1.4
+ * @version Package Version 1.0.3
 */
 
 /*
@@ -40,9 +40,11 @@ void SYSTEM_Initialize(void)
 {
     CLOCK_Initialize();
     PIN_MANAGER_Initialize();
+    TMR0_Initialize();
+    CMP1_Initialize();
     CMP2_Initialize();
-    EUSART_Initialize();
-    FVR_Initialize();
+    CVREF_Initialize();
+    EUSART1_Initialize();
     INTERRUPT_Initialize();
 }
 

@@ -1,13 +1,13 @@
 /**
- * UART Printf Example Driver File
+ * UART Write String - Callback Example Driver File
  * 
-  * @file uart_example.c
+ * @file uart_example.c
  * 
  * @addtogroup uart-example
  * 
- * @brief This is the generated example implementation for the UART Printf With Variable counter
+ * @brief This is the generated example implementation for UART Write String in Callback mode
  *
- * @version UART Printf Example Version 1.0.0
+ * @version UART Write String - Callback Example Version 1.0.0
 */
 /*
 © [2025] Microchip Technology Inc. and its subsidiaries.
@@ -30,26 +30,28 @@
     THIS SOFTWARE.
 */
 
-/* Use Case 1 implementation. Copy this code to your project source, e.g., to main.c  */
+/* Use Case 2 Callback implementation. Copy this code to your project source, e.g., to main.c  */
 /* ------------------------------------------------------------------
+
 #include "mcc_generated_files/system/system.h"
 #include <string.h>
 
-void UART_PrintLoop(int count);
+void UART_WriteString(const char *message);
 
-void UART_PrintLoop(int count)
+void UART_WriteString(const char *message)
 {
-    int i;
-    for(i = 0; i < count; i++)
+    for(int i = 0; i < (int)strlen(message); i++)
     {
-        (void) printf("%d. Hello World!\n\r",(i+1));
+        (void) UART.Write(message[i]);
     }
 }
 
 void main(void)
 {
+    const char message[] = "Hello World!\r\n";
     SYSTEM_Initialize();
-    (void) UART_PrintLoop(5); 
+    INTERRUPT_GlobalInterruptEnable();
+    (void) UART_WriteString(message); 
 
     while(1)
     {
