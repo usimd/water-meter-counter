@@ -12,7 +12,7 @@
 */
 
 /*
-� [2025] Microchip Technology Inc. and its subsidiaries.
+� [2026] Microchip Technology Inc. and its subsidiaries.
 
     Subject to your compliance with these terms, you may use Microchip 
     software and any derivatives exclusively with Microchip products. 
@@ -104,90 +104,91 @@
 #define S0_SetDigitalOutput()   do { TRISBbits.TRISB2 = 0; } while(0)
 #define S0_SetPullup()          do { WPUBbits.WPUB2 = 1; } while(0)
 #define S0_ResetPullup()        do { WPUBbits.WPUB2 = 0; } while(0)
-#define S0_SetPushPull()        do { ODCONBbits. = 0; } while(0)
-#define S0_SetOpenDrain()       do { ODCONBbits. = 1; } while(0)
-#define S0_SetAnalogMode()      do { ANSELBbits. = 1; } while(0)
-#define S0_SetDigitalMode()     do { ANSELBbits. = 0; } while(0)
+// RB2 has no per-pin open-drain control (ODCON only for peripherals) and no analog function
+#define S0_SetPushPull()        do { } while(0)  // No ODCONB bit for RB2
+#define S0_SetOpenDrain()       do { } while(0)  // No ODCONB bit for RB2
+#define S0_SetAnalogMode()      do { } while(0)  // RB2 has no ANSEL bit
+#define S0_SetDigitalMode()     do { } while(0)  // RB2 has no ANSEL bit
 
 // get/set RC0 aliases
 #define LCB_TRIS                 TRISCbits.TRISC0
 #define LCB_LAT                  LATCbits.LATC0
 #define LCB_PORT                 PORTCbits.RC0
-#define LCB_WPU                  WPUCbits.WPUC0
-#define LCB_OD                   ODCONCbits.ODCC0
-#define LCB_ANS                  ANSELCbits.
+// RC0 has no WPU, ODCON, or ANSEL bits (SOSC pins are special)
+// These macros are intentionally left incomplete - do not use them
 #define LCB_SetHigh()            do { LATCbits.LATC0 = 1; } while(0)
 #define LCB_SetLow()             do { LATCbits.LATC0 = 0; } while(0)
 #define LCB_Toggle()             do { LATCbits.LATC0 = ~LATCbits.LATC0; } while(0)
 #define LCB_GetValue()           PORTCbits.RC0
 #define LCB_SetDigitalInput()    do { TRISCbits.TRISC0 = 1; } while(0)
 #define LCB_SetDigitalOutput()   do { TRISCbits.TRISC0 = 0; } while(0)
-#define LCB_SetPullup()          do { WPUCbits.WPUC0 = 1; } while(0)
-#define LCB_ResetPullup()        do { WPUCbits.WPUC0 = 0; } while(0)
-#define LCB_SetPushPull()        do { ODCONCbits.ODCC0 = 0; } while(0)
-#define LCB_SetOpenDrain()       do { ODCONCbits.ODCC0 = 1; } while(0)
-#define LCB_SetAnalogMode()      do { *(volatile unsigned char*)0xF1E |= 0x08; } while(0)
-#define LCB_SetDigitalMode()     do { *(volatile unsigned char*)0xF1E &= ~0x08; } while(0)
+// RC0 has no WPU, ODCON, or ANSEL bits - these are no-ops
+#define LCB_SetPullup()          do { } while(0)
+#define LCB_ResetPullup()        do { } while(0)
+#define LCB_SetPushPull()        do { } while(0)
+#define LCB_SetOpenDrain()       do { } while(0)
+#define LCB_SetAnalogMode()      do { } while(0)
+#define LCB_SetDigitalMode()     do { } while(0)
 
 // get/set RC5 aliases
 #define LCA_TRIS                 TRISCbits.TRISC5
 #define LCA_LAT                  LATCbits.LATC5
 #define LCA_PORT                 PORTCbits.RC5
-#define LCA_WPU                  WPUCbits.WPUC5
-#define LCA_OD                   ODCONCbits.ODCC5
-#define LCA_ANS                  ANSELCbits.
+// RC5 has no WPU, ODCON, or ANSEL bits
+// These macros are intentionally left incomplete - do not use them
 #define LCA_SetHigh()            do { LATCbits.LATC5 = 1; } while(0)
 #define LCA_SetLow()             do { LATCbits.LATC5 = 0; } while(0)
 #define LCA_Toggle()             do { LATCbits.LATC5 = ~LATCbits.LATC5; } while(0)
 #define LCA_GetValue()           PORTCbits.RC5
 #define LCA_SetDigitalInput()    do { TRISCbits.TRISC5 = 1; } while(0)
 #define LCA_SetDigitalOutput()   do { TRISCbits.TRISC5 = 0; } while(0)
-#define LCA_SetPullup()          do { WPUCbits.WPUC5 = 1; } while(0)
-#define LCA_ResetPullup()        do { WPUCbits.WPUC5 = 0; } while(0)
-#define LCA_SetPushPull()        do { ODCONCbits.ODCC5 = 0; } while(0)
-#define LCA_SetOpenDrain()       do { ODCONCbits.ODCC5 = 1; } while(0)
-#define LCA_SetAnalogMode()      do { *(volatile unsigned char*)0xF1E |= 0x80; } while(0)
-#define LCA_SetDigitalMode()     do { *(volatile unsigned char*)0xF1E &= ~0x80; } while(0)
+// RC5 has no WPU, ODCON, or ANSEL bits - these are no-ops
+#define LCA_SetPullup()          do { } while(0)
+#define LCA_ResetPullup()        do { } while(0)
+#define LCA_SetPushPull()        do { } while(0)
+#define LCA_SetOpenDrain()       do { } while(0)
+#define LCA_SetAnalogMode()      do { } while(0)
+#define LCA_SetDigitalMode()     do { } while(0)
 
 // get/set RC6 aliases
 #define IO_RC6_TRIS                 TRISCbits.TRISC6
 #define IO_RC6_LAT                  LATCbits.LATC6
 #define IO_RC6_PORT                 PORTCbits.RC6
-#define IO_RC6_WPU                  WPUCbits.
-#define IO_RC6_OD                   ODCONCbits.
-#define IO_RC6_ANS                  ANSELCbits.
+// RC6 has no WPU, ODCON, or ANSEL bits (EUSART TX pin)
+// These macros are intentionally left incomplete - do not use them
 #define IO_RC6_SetHigh()            do { LATCbits.LATC6 = 1; } while(0)
 #define IO_RC6_SetLow()             do { LATCbits.LATC6 = 0; } while(0)
 #define IO_RC6_Toggle()             do { LATCbits.LATC6 = ~LATCbits.LATC6; } while(0)
 #define IO_RC6_GetValue()           PORTCbits.RC6
 #define IO_RC6_SetDigitalInput()    do { TRISCbits.TRISC6 = 1; } while(0)
 #define IO_RC6_SetDigitalOutput()   do { TRISCbits.TRISC6 = 0; } while(0)
-#define IO_RC6_SetPullup()          do { WPUCbits. = 1; } while(0)
-#define IO_RC6_ResetPullup()        do { WPUCbits. = 0; } while(0)
-#define IO_RC6_SetPushPull()        do { ODCONCbits. = 0; } while(0)
-#define IO_RC6_SetOpenDrain()       do { ODCONCbits. = 1; } while(0)
-#define IO_RC6_SetAnalogMode()      do { ANSELCbits. = 1; } while(0)
-#define IO_RC6_SetDigitalMode()     do { ANSELCbits. = 0; } while(0)
+// RC6 has no WPU, ODCON, or ANSEL bits - these are no-ops
+#define IO_RC6_SetPullup()          do { } while(0)
+#define IO_RC6_ResetPullup()        do { } while(0)
+#define IO_RC6_SetPushPull()        do { } while(0)
+#define IO_RC6_SetOpenDrain()       do { } while(0)
+#define IO_RC6_SetAnalogMode()      do { } while(0)
+#define IO_RC6_SetDigitalMode()     do { } while(0)
 
 // get/set RC7 aliases
 #define IO_RC7_TRIS                 TRISCbits.TRISC7
 #define IO_RC7_LAT                  LATCbits.LATC7
 #define IO_RC7_PORT                 PORTCbits.RC7
-#define IO_RC7_WPU                  WPUCbits.
-#define IO_RC7_OD                   ODCONCbits.
-#define IO_RC7_ANS                  ANSELCbits.
+// RC7 has no WPU, ODCON, or ANSEL bits (EUSART RX pin)
+// These macros are intentionally left incomplete - do not use them
 #define IO_RC7_SetHigh()            do { LATCbits.LATC7 = 1; } while(0)
 #define IO_RC7_SetLow()             do { LATCbits.LATC7 = 0; } while(0)
 #define IO_RC7_Toggle()             do { LATCbits.LATC7 = ~LATCbits.LATC7; } while(0)
 #define IO_RC7_GetValue()           PORTCbits.RC7
 #define IO_RC7_SetDigitalInput()    do { TRISCbits.TRISC7 = 1; } while(0)
 #define IO_RC7_SetDigitalOutput()   do { TRISCbits.TRISC7 = 0; } while(0)
-#define IO_RC7_SetPullup()          do { WPUCbits. = 1; } while(0)
-#define IO_RC7_ResetPullup()        do { WPUCbits. = 0; } while(0)
-#define IO_RC7_SetPushPull()        do { ODCONCbits. = 0; } while(0)
-#define IO_RC7_SetOpenDrain()       do { ODCONCbits. = 1; } while(0)
-#define IO_RC7_SetAnalogMode()      do { ANSELCbits. = 1; } while(0)
-#define IO_RC7_SetDigitalMode()     do { ANSELCbits. = 0; } while(0)
+// RC7 has no WPU, ODCON, or ANSEL bits - these are no-ops
+#define IO_RC7_SetPullup()          do { } while(0)
+#define IO_RC7_ResetPullup()        do { } while(0)
+#define IO_RC7_SetPushPull()        do { } while(0)
+#define IO_RC7_SetOpenDrain()       do { } while(0)
+#define IO_RC7_SetAnalogMode()      do { } while(0)
+#define IO_RC7_SetDigitalMode()     do { } while(0)
 
 /**
  * @ingroup  pinsdriver

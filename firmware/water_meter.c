@@ -196,25 +196,22 @@ static uint8_t WaterMeter_ChargeLCB(void)
  */
 static void WaterMeter_UpdateState(void)
 {
-    /* SINGLE-SENSOR MODE: RC0 hardware fault, LCB disabled */
+    /* DUAL-SENSOR MODE: Both LC tanks active */
     meter_ctx.lca_oscillation_count = WaterMeter_ChargeLCA();
-    meter_ctx.lcb_oscillation_count = 0;  // LCB disabled due to RC0 pin failure
+    meter_ctx.lcb_oscillation_count = WaterMeter_ChargeLCB();
     
     /* Determine state based on oscillation counts */
     /* Lower oscillation count = metal detected (damped oscillations) */
     meter_ctx.lca_state = (meter_ctx.lca_oscillation_count <= meter_ctx.lca_threshold);
-    meter_ctx.lcb_state = false;  // LCB permanently disabled
+    meter_ctx.lcb_state = (meter_ctx.lcb_oscillation_count <= meter_ctx.lcb_threshold);
     
-    /* Single-sensor state machine: Pulse on each LCA transition */
-    static bool last_lca_state = false;
-    if (meter_ctx.lca_state != last_lca_state) {
-        last_lca_state = meter_ctx.lca_state;
-        if (meter_ctx.lca_state) {
-            // Metal detected - treat as rotation pulse
-            meter_ctx.current_state = STATE_LC_A_HIGH;
-        } else {
-            meter_ctx.current_state = STATE_INVALID;
-        }
+    /* Dual-sensor state machine */
+    if (meter_ctx.lca_state && !meter_ctx.lcb_state) {
+        meter_ctx.current_state = STATE_LC_A_HIGH;
+    } else if (!meter_ctx.lca_state && meter_ctx.lcb_state) {
+        meter_ctx.current_state = STATE_LC_B_HIGH;
+    } else if (meter_ctx.lca_state && meter_ctx.lcb_state) {
+        meter_ctx.current_state = STATE_TRANSITION;
     } else {
         meter_ctx.current_state = STATE_INVALID;
     }
@@ -256,32 +253,29 @@ static void WaterMeter_HandleS0Pulse(void)
 /**
  * @brief Detect rotation from LC tank state transitions
  * 
- * Water meter typically has two magnets that trigger LC tank circuits
- * A full rotation requires a specific sequence of state transitions
+ * The water meter disc is half metal (180 deg) with two LC tank inductors
+ * placed 120 deg apart. This creates 2 state transitions per half rotation:
+ *   - Transition into STATE_TRANSITION (both sensors see metal or both see no metal)
+ *   - Transition out of STATE_TRANSITION (one sensor changes)
+ * 
+ * With 0.5L resolution: Generate S0 pulse on each transition INTO STATE_TRANSITION
+ * This gives 2 pulses per full rotation = 0.5 liters per pulse
  */
 static bool WaterMeter_DetectRotation(void)
 {
     bool rotation_detected = false;
     
-    // Check for valid state transition
-    // A rotation is detected when we see the proper LC tank resonance sequence
+    // Detect transition INTO STATE_TRANSITION state
+    // This occurs twice per rotation (half-metal disc, 120 deg inductor offset)
+    // Each transition = 0.5 liter of water flow
     
     if (meter_ctx.previous_state != STATE_TRANSITION && 
         meter_ctx.current_state == STATE_TRANSITION) {
-        // Valid transition detected
-        meter_ctx.transition_counter++;
-        
-        // A full rotation typically involves 2 transition points
-        // Adjust this based on actual meter magnet configuration
-        if (meter_ctx.transition_counter >= 2) {
-            rotation_detected = true;
-            meter_ctx.transition_counter = 0;
-            meter_ctx.rotation_count++;
-            WaterMeter_GenerateS0Pulse();
-        }
-    } else if (meter_ctx.current_state != STATE_TRANSITION) {
-        // Reset transition counter if not in transition state
-        meter_ctx.transition_counter = 0;
+        // Valid transition detected - generate S0 pulse immediately
+        // Resolution: 0.5 liters per pulse (2 pulses per rotation)
+        rotation_detected = true;
+        meter_ctx.rotation_count++;  // Counts half-rotations now
+        WaterMeter_GenerateS0Pulse();
     }
     
     return rotation_detected;
@@ -643,16 +637,16 @@ void WaterMeter_DiagnosticTest(void) {
     printf("  → CRITICAL: Both should be 0 (outputs) for pulsing to work!\r\n");
     
     // Test RC0 configuration and pulsing capability
+    // Note: RC0 does NOT have an ANSEL bit on PIC18F25K80. GPIO functionality
+    // is controlled by the SOSCSEL config bits (must be DIG for digital I/O).
     printf("\r\nTesting RC0 (LCB drive) pin configuration:\r\n");
     printf("  TRISC0 (direction): %d (0=output, 1=input)\r\n", TRISCbits.TRISC0);
-    printf("  ANSELC (analog): 0x%02X (bit 0 should be 0 for digital)\r\n", *(volatile unsigned char*)0xF1E);
-    printf("  RC0 ANSEL bit 0: %d (0=digital, 1=analog)\r\n", (*(volatile unsigned char*)0xF1E) & 0x01);
+    printf("  Note: RC0 has no ANSEL bit; requires SOSCSEL=DIG config for GPIO\r\n");
     
-    // Force RC0 to digital output mode
+    // Ensure RC0 is configured as output
     TRISCbits.TRISC0 = 0;  // Output
-    *(volatile unsigned char*)0xF1E &= ~0x01;  // Digital mode (clear ANSELC bit 0)
     
-    printf("\r\nAfter forcing digital output mode:\r\n");
+    printf("\r\nAfter ensuring output mode:\r\n");
     LCB_SetDigitalOutput();
     LCB_SetLow();
     __delay_ms(10);
@@ -688,6 +682,8 @@ void WaterMeter_DiagnosticTest(void) {
     
     // Check if any peripheral module is controlling RC0
     printf("\r\nChecking peripheral module states:\r\n");
+    printf("  OSCCON2: 0x%02X (bit 3 SOSCGO: %d = %s)\r\n",
+           OSCCON2, (OSCCON2 >> 3) & 0x01, ((OSCCON2 >> 3) & 0x01) ? "SOSC RUNNING - RC0 BLOCKED!" : "SOSC off");
     printf("  SSPCON1 (SPI): 0x%02X (bit 5 SSPEN: %d = %s)\r\n", 
            SSPCON1, (SSPCON1 >> 5) & 0x01, ((SSPCON1 >> 5) & 0x01) ? "SPI ENABLED" : "disabled");
     printf("  T1CON (Timer1): 0x%02X (bit 3 T1OSCEN: %d = %s)\r\n",

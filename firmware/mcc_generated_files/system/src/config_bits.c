@@ -13,7 +13,7 @@
 */
 
 /*
-© [2025] Microchip Technology Inc. and its subsidiaries.
+ï¿½ [2026] Microchip Technology Inc. and its subsidiaries.
 
     Subject to your compliance with these terms, you may use Microchip 
     software and any derivatives exclusively with Microchip products. 
@@ -38,8 +38,8 @@
 //CONFIG1L
 #pragma config RETEN = ON    // VREG Sleep Enable bit->Ultra low-power regulator is Enabled (Controlled by SRETEN bit)
 #pragma config INTOSCSEL = HIGH    // LF-INTOSC Low-power Enable bit->LF-INTOSC in High-power mode during Sleep
-#pragma config SOSCSEL = HIGH    // SOSC Power Selection and mode Configuration bits->High Power SOSC circuit selected
-#pragma config XINST = OFF    // Extended Instruction Set->Disabled
+#pragma config SOSCSEL = DIG    // SOSC Power Selection and mode Configuration bits->Digital (SCLKI) mode
+#pragma config XINST = OFF    // Extended Instruction Set->Disabled (XC8 free doesn't support this)
 
 //CONFIG1H
 #pragma config FOSC = INTIO2    // Oscillator Selection bits->Internal RC oscillator
