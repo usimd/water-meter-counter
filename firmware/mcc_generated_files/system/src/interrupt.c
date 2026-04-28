@@ -11,7 +11,7 @@
 */
 
 /*
-© [2025] Microchip Technology Inc. and its subsidiaries.
+ï¿½ [2026] Microchip Technology Inc. and its subsidiaries.
 
     Subject to your compliance with these terms, you may use Microchip 
     software and any derivatives exclusively with Microchip products. 
@@ -108,29 +108,28 @@ void  INTERRUPT_Initialize (void)
 void __interrupt() INTERRUPT_InterruptManagerHigh (void)
 {
     // interrupt handler
+    // PRIORITY: Comparators first - they need fast response for LC oscillation counting
+    // Using parallel if statements to service multiple interrupts per ISR call
+    
+    if(PIE4bits.CMP1IE == 1 && PIR4bits.CMP1IF == 1)
+    {
+        CMP1_ISR();
+    }
+    if(PIE4bits.CMP2IE == 1 && PIR4bits.CMP2IF == 1)
+    {
+        CMP2_ISR();
+    }
     if(INTCONbits.TMR0IE == 1 && INTCONbits.TMR0IF == 1)
     {
         TMR0_OverflowISR();
     }
-    else if(PIE1bits.TX1IE == 1 && PIR1bits.TX1IF == 1)
+    if(PIE1bits.TX1IE == 1 && PIR1bits.TX1IF == 1)
     {
         EUSART1_TxInterruptHandler();
     }
-    else if(PIE1bits.RC1IE == 1 && PIR1bits.RC1IF == 1)
+    if(PIE1bits.RC1IE == 1 && PIR1bits.RC1IF == 1)
     {
         EUSART1_RxInterruptHandler();
-    }
-    else if(PIE4bits.CMP1IE == 1 && PIR4bits.CMP1IF == 1)
-    {
-        CMP1_ISR();
-    }
-    else if(PIE4bits.CMP2IE == 1 && PIR4bits.CMP2IF == 1)
-    {
-        CMP2_ISR();
-    }
-    else
-    {
-        //Unhandled Interrupt
     }
 }
 

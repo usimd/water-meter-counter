@@ -1,791 +1,885 @@
 /**
  * Water Meter Counter Module Implementation
  * 
- * @file water_meter.c
+ * Dual LC tank metal detection for water meter disc rotation sensing.
  * 
- * @brief Implementation of water meter rotation counter using dual LC tank circuits
+ * Hardware:
+ *   LCA: Drive=RC5, Sense=RB1 (CMP1)
+ *   LCB: Drive=RC0, Sense=RA5 (CMP2)
+ *   S0:  RB2 (pulse output)
+ * 
+ * Detection principle:
+ *   - Metal near an inductor damps the ring-down response.
+ *   - Raw ADC span on the sense node is the primary metal-state signal.
+ *   - Comparator edge counts remain as diagnostics because bench data showed
+ *     they move less reliably than the raw span.
  */
 
 #include "water_meter.h"
 #include "mcc_generated_files/system/system.h"
+#include <xc.h>
 
-/* Forward declarations */
-static void WaterMeter_TMR0_Callback(void);
-
-/* LC tank drive and sense timing constants */
-#define LC_TANK_DRIVE_PULSE_US    100  /* Initial pulse width in microseconds - increased for better excitation */
-#define LC_TANK_MEASUREMENT_US    2000  /* Oscillation measurement period in microseconds (2ms) */
-#define LC_TANK_SETTLE_US         100  /* Settling time after driving before measurement */
-
-/**
- * @brief Water meter state machine context
+/* Oscillation counters - updated by comparator ISRs
+ * Note: With CCH=10 (cross-mapping per datasheet Figure 24-4 Note 2):
+ *   CMP1 senses C2INB (RA5) = LCB sense
+ *   CMP2 senses C1INB (RB1) = LCA sense
  */
-typedef struct {
-    water_meter_state_t current_state;
-    water_meter_state_t previous_state;
-    uint32_t rotation_count;
-    bool lca_state;              /**< Current state of LC Tank A */
-    bool lcb_state;              /**< Current state of LC Tank B */
-    uint16_t transition_counter; /**< Counter for detecting complete rotation */
-    bool s0_pulse_active;        /**< Flag indicating S0 pulse in progress */
-    uint16_t s0_pulse_width;     /**< Counter for S0 pulse width control */
-    bool last_valid_transition;  /**< Track last valid transition for rotation detection */
-    uint8_t lca_oscillation_count; /**< Oscillation count for LC Tank A */
-    uint8_t lcb_oscillation_count; /**< Oscillation count for LC Tank B */
-    uint8_t lca_threshold;       /**< Calibrated threshold for LC Tank A metal detection */
-    uint8_t lcb_threshold;       /**< Calibrated threshold for LC Tank B metal detection */
-} water_meter_context_t;
+static volatile uint16_t cmp1_count = 0;  /* LCB edges */
+static volatile uint16_t cmp2_count = 0;  /* LCA edges */
 
-static water_meter_context_t meter_ctx = {
-    .current_state = STATE_INVALID,
-    .previous_state = STATE_INVALID,
-    .rotation_count = 0,
-    .lca_state = false,
-    .lcb_state = false,
-    .transition_counter = 0,
-    .s0_pulse_active = false,
-    .s0_pulse_width = 0,
-    .last_valid_transition = false,
-    .lca_oscillation_count = 0,
-    .lcb_oscillation_count = 0,
-    .lca_threshold = 18,  /* Calibrated threshold: no-metal=20-25, metal=12-13, threshold=18 */
-    .lcb_threshold = 18   /* Calibrated threshold for LC Tank B */
-};
+/* Last measured oscillation counts */
+static uint8_t lca_count = 0;
+static uint8_t lcb_count = 0;
+static uint8_t lca_polled_count = 0;
+static uint16_t lca_raw_min = 0;
+static uint16_t lca_raw_max = 0;
+static uint16_t lca_raw_span = 0;
+static uint16_t lcb_raw_span = 0;
+static uint16_t lca_span_baseline = 0;
+static uint16_t lcb_span_baseline = 0;
+static int8_t last_rotation_direction = 0;
 
-/* S0 pulse timing constants */
-/* With TMR0 at 100ms period */
-#define S0_PULSE_WIDTH_MS  100  /* S0 pulse width in milliseconds */
-#define S0_PULSE_COUNTER   1    /* Pulse counter ticks (1 tick = 100ms) */
-
-/* Deep sleep timing constants */
-/* Geometry: Disc 7.5mm radius, inductors at 5mm from center, 120° apart */
-/* Only half disc is metal. Each inductor sees metal ~60° per 120° rotation sector */
-/* Conservative timeout to ensure no rotations are missed accounting for */
-/* variable flow rates and inductor positioning (120° offset) */
-#define SLEEP_TIMEOUT_MIN_MS   2500  /* Minimum safe timeout (2.5 seconds) */
-#define SLEEP_TIMEOUT_DEFAULT_MS 3000 /* Default timeout (3 seconds) */
-
-/* TMR0 configuration: 100ms per interrupt from hardware */
-/* With 100ms hardware interrupt, we can directly use it for sleep wakeups */
-#define TMR0_INTERRUPT_PERIOD_MS  100   /* Hardware generates interrupt every 100ms */
-#define SLEEP_WAKEUP_GRANULE_MS   100   /* Software wakeup granularity in milliseconds */
-#define SLEEP_PRESCALER_COUNT     1     /* No software prescaling needed */
-
-typedef struct {
-    uint16_t sleep_timeout_ms;   /* Target sleep duration in milliseconds */
-    uint16_t sleep_counter;      /* Counter for sleep timing in 100ms units */
-    bool sleep_enabled;          /* Sleep mode enabled flag */
-    bool can_sleep;              /* Flag indicating system is in idle state */
-} sleep_context_t;
-
-static sleep_context_t sleep_ctx = {
-    .sleep_timeout_ms = SLEEP_TIMEOUT_DEFAULT_MS,
-    .sleep_counter = 0,
-    .sleep_enabled = false,
-    .can_sleep = true
-};
-
-/* Global oscillation counter for ISR context */
-static volatile uint8_t oscillation_counter = 0;
-static volatile uint8_t measurement_active = 0;
-
-/**
- * @brief Charge LC Tank A and measure oscillation count
- * 
- * Drives the LC tank at RC5 (LCA) and counts oscillations on the sense pin
- * to detect metal presence (damped oscillations indicate metal nearby).
- * 
- * @return Number of oscillations counted during measurement period
+/* State tracking for Gray code quadrature decoding
+ * State = (LCA_metal << 1) | LCB_metal
+ *   0 = 00 = both air
+ *   1 = 01 = LCB metal only
+ *   2 = 10 = LCA metal only
+ *   3 = 11 = both metal
+ *
+ * Mounted logs showed the real installed pass order is:
+ *   A -> AB -> B -> air
+ * so forward must be interpreted as 0→2→3→1→0 on this build.
  */
-static uint8_t WaterMeter_ChargeLCA(void)
+static uint8_t current_state = 0;
+
+/* Rotation counters - separate forward and reverse */
+static uint32_t forward_count = 0;
+static uint32_t reverse_count = 0;
+static uint8_t sequence_direction = 0;
+static uint8_t sequence_progress = 0;
+static uint8_t air_rearm_count = 0;
+static bool sequence_armed = false;
+static uint8_t lca_below_threshold_samples = 0;
+static uint8_t lcb_below_threshold_samples = 0;
+
+static const uint8_t forward_sequence[5] = {0U, 2U, 3U, 1U, 0U};
+static const uint8_t reverse_sequence[5] = {0U, 1U, 3U, 2U, 0U};
+
+/* Timing constants for GPIO HiZ measurement */
+#define DRAIN_TIME_US     100   /* Discharge tank before measurement */
+#define EXCITE_TIME_US    100   /* Pulse duration to kick tank */
+#define MEASURE_TIME_US   500   /* Window to count oscillations */
+
+/* Comparator CVREF still matters for diagnostics, but not for primary state detection. */
+#define CVR_OPTIMAL    16U  /* CVref setting for 2.5V threshold */
+
+/* Span-based state detection thresholds.
+ * Bench tuning was too conservative once the sensor was mounted.
+ * The mounted logs now show tracked baselines around:
+ *   A baseline: ~25-28
+ *   B baseline: ~29-34
+ * with repeated drop excursions of roughly:
+ *   A drop: ~7-9
+ *   B drop: ~8-13
+ *
+ * Use drop from the slowly tracked air baseline plus a dominance margin so
+ * cross-coupling does not turn a strong A-only or B-only event into a false
+ * "both metal" state when entering from air. Once a pass is already in a
+ * single-channel state, simultaneous activation should promote to AB so the
+ * Gray sequence can complete. Mounted operation also benefits from an
+ * asymmetric air-baseline tracker so transient low spans do not desensitize
+ * the detector by dragging the reference down.
+ */
+#define LCA_DROP_ENTER             7U
+#define LCB_DROP_ENTER             8U
+#define LCA_DROP_JOIN              4U
+#define LCB_DROP_JOIN              5U
+#define LCA_DROP_HOLD              4U
+#define LCB_DROP_HOLD              5U
+#define LCA_RELEASE_SAMPLES        2U
+#define LCB_RELEASE_SAMPLES        2U
+#define DROP_DOMINANCE_ENTER       3U
+#define DROP_DOMINANCE_HOLD        2U
+#define SPAN_BASELINE_RISE_SHIFT   2U  /* 1/4 update when quiet-air baseline rises */
+#define SPAN_BASELINE_TRIM_GUARD   2U  /* Only trim baseline down for tiny steady shifts */
+#define ROTATION_REARM_SAMPLES     2U  /* Require 100 ms of stable air before re-arming */
+
+/* ADC-based raw-node capture on the sense pins.
+ * This is slower than the actual oscillation frequency, so it does not resolve
+ * every cycle. It is still useful because it measures the analog node directly
+ * instead of depending on comparator threshold crossings. */
+#define ADC_CHANNEL_LCA   8U   /* RB1 = AN8 */
+#define ADC_CHANNEL_LCB   4U   /* RA5 = AN4 */
+#define ADC_RAW_SAMPLES   16U
+/*
+ * Raw-node capture reads a very high-impedance, AC-coupled sense node.
+ * Use a long acquisition window so the ADC sample capacitor can settle.
+ */
+#define ADCON2_RAW_CAPTURE 0xBA  /* ADFM=1, ACQT=20TAD, ADCS=Fosc/32 */
+
+/* Periodic CVREF sweep on both channels.
+ * Each point stores: ISR count / polled count / raw ADC span. */
+#define DIAGNOSTIC_SWEEP_POINT_COUNT 9U
+#define DIAGNOSTIC_SWEEP_INTERVAL    20U
+static const uint8_t diagnostic_cvr_points[DIAGNOSTIC_SWEEP_POINT_COUNT] = {12U, 13U, 14U, 15U, 16U, 17U, 18U, 19U, 20U};
+static uint8_t diagnostic_lca_counts[DIAGNOSTIC_SWEEP_POINT_COUNT] = {0};
+static uint8_t diagnostic_lcb_counts[DIAGNOSTIC_SWEEP_POINT_COUNT] = {0};
+static uint8_t diagnostic_apl_counts[DIAGNOSTIC_SWEEP_POINT_COUNT] = {0};
+static uint8_t diagnostic_bpl_counts[DIAGNOSTIC_SWEEP_POINT_COUNT] = {0};
+static uint16_t diagnostic_raw_spans_a[DIAGNOSTIC_SWEEP_POINT_COUNT] = {0};
+static uint16_t diagnostic_raw_spans_b[DIAGNOSTIC_SWEEP_POINT_COUNT] = {0};
+static bool diagnostic_sweep_ready = false;
+static uint8_t diagnostic_loop_divider = 0;
+static uint8_t current_cvref = CVR_OPTIMAL;
+
+/* S0 pulse configuration - uses TMR0 (100ms tick).
+ * Keep this longer during mounted bring-up so a meter or DMM can catch it. */
+static volatile uint8_t s0_ticks_remaining = 0;
+#define S0_PULSE_DURATION_TICKS  20  /* 2.0 s pulse (20 x 100ms TMR0 ticks) */
+
+/* TMR0 overflow callback for S0 pulse timing */
+static void S0_TimerCallback(void)
 {
-    oscillation_counter = 0;
-    measurement_active = 1;
-    
-    /* Set pulse input (RC5) as output */
-    LCA_SetDigitalOutput();
-    LCA_SetLow();
-    __delay_us(50);
-    
-    /* Drive RC5 with pulses to excite the LC tank */
-    /* Count oscillations that occur on the sense pin (RA5) during this time */
-    
-    for (int pulse = 0; pulse < 12; pulse++) {
-        /* Drive HIGH for 500µs to excite the tank */
-        LCA_SetHigh();
-        __delay_us(500);
-        
-        /* Drive LOW for 500µs - tank ringdown continues oscillating */
-        LCA_SetLow();
-        __delay_us(500);
-    }
-    
-    /* Stop measurement and ensure clean state for next cycle */
-    measurement_active = 0;
-    LCA_SetLow();
-    
-    /* CRITICAL: Set RC5 to INPUT to allow LC tank to discharge naturally */
-    /* If RC5 stays as OUTPUT LOW, it actively damps the tank */
-    /* Setting to INPUT allows free oscillation decay */
-    LCA_SetDigitalInput();
-    
-    /* Wait for LC tank oscillations to die out completely */
-    __delay_us(2000);  /* 2ms settling time */
-    
-    /* Return accumulated oscillation count */
-    uint8_t count = oscillation_counter;
-    oscillation_counter = 0;
-    return count;
-}
-
-/**
- * @brief Charge LC Tank B and measure oscillation count
- * 
- * Drives the LC tank at RC0 (LCB) and counts oscillations on the sense pin
- * to detect metal presence (damped oscillations indicate metal nearby).
- * 
- * @return Number of oscillations counted during measurement period
- */
-static uint8_t WaterMeter_ChargeLCB(void)
-{
-    oscillation_counter = 0;
-    measurement_active = 1;
-    
-    /* Set pulse input (RC0) as output */
-    LCB_SetDigitalOutput();
-    LCB_SetLow();
-    __delay_us(50);
-    
-    /* Drive RC0 with pulses to excite the LC tank */
-    /* Count oscillations that occur on the sense pin (RB1) during this time */
-    
-    for (int pulse = 0; pulse < 12; pulse++) {
-        /* Drive HIGH for 600µs to excite the tank */
-        LCB_SetHigh();
-        __delay_us(600);
-        
-        /* Drive LOW for 600µs - tank ringdown continues oscillating */
-        LCB_SetLow();
-        __delay_us(600);
-    }
-    
-    /* Stop measurement and ensure clean state for next cycle */
-    measurement_active = 0;
-    LCB_SetLow();
-    
-    /* CRITICAL: Set RC0 to INPUT to allow LC tank to discharge naturally */
-    /* If RC0 stays as OUTPUT LOW, it actively damps the tank */
-    /* Setting to INPUT allows free oscillation decay */
-    LCB_SetDigitalInput();
-    
-    /* Wait for LC tank oscillations to die out completely */
-    __delay_us(2000);  /* 2ms settling time */
-    
-    /* Return accumulated oscillation count */
-    uint8_t count = oscillation_counter;
-    oscillation_counter = 0;
-    return count;
-}
-
-/**
- * @brief Update the current state based on LC tank oscillation measurements
- * 
- * Charges each LC tank and counts oscillations to detect metal presence.
- * Metal near the tank dampens oscillations (fewer oscillations).
- * State is determined by comparing oscillation count to calibrated threshold.
- */
-static void WaterMeter_UpdateState(void)
-{
-    /* DUAL-SENSOR MODE: Both LC tanks active */
-    meter_ctx.lca_oscillation_count = WaterMeter_ChargeLCA();
-    meter_ctx.lcb_oscillation_count = WaterMeter_ChargeLCB();
-    
-    /* Determine state based on oscillation counts */
-    /* Lower oscillation count = metal detected (damped oscillations) */
-    meter_ctx.lca_state = (meter_ctx.lca_oscillation_count <= meter_ctx.lca_threshold);
-    meter_ctx.lcb_state = (meter_ctx.lcb_oscillation_count <= meter_ctx.lcb_threshold);
-    
-    /* Dual-sensor state machine */
-    if (meter_ctx.lca_state && !meter_ctx.lcb_state) {
-        meter_ctx.current_state = STATE_LC_A_HIGH;
-    } else if (!meter_ctx.lca_state && meter_ctx.lcb_state) {
-        meter_ctx.current_state = STATE_LC_B_HIGH;
-    } else if (meter_ctx.lca_state && meter_ctx.lcb_state) {
-        meter_ctx.current_state = STATE_TRANSITION;
-    } else {
-        meter_ctx.current_state = STATE_INVALID;
-    }
-}
-
-/**
- * @brief Generate S0 pulse on meter reading
- * 
- * S0 interface typically requires a ~100ms pulse
- */
-static void WaterMeter_GenerateS0Pulse(void)
-{
-    if (!meter_ctx.s0_pulse_active) {
-        meter_ctx.s0_pulse_active = true;
-        meter_ctx.s0_pulse_width = 0;
-        S0_SetHigh();  // Start S0 pulse
-    }
-}
-
-/**
- * @brief Handle S0 pulse timing
- * 
- * Called from Process() to decrement pulse timer
- */
-static void WaterMeter_HandleS0Pulse(void)
-{
-    if (meter_ctx.s0_pulse_active) {
-        meter_ctx.s0_pulse_width++;
-        
-        // End pulse after specified width
-        if (meter_ctx.s0_pulse_width >= S0_PULSE_COUNTER) {
-            S0_SetLow();  // End S0 pulse
-            meter_ctx.s0_pulse_active = false;
-            meter_ctx.s0_pulse_width = 0;
+    if (s0_ticks_remaining > 0) {
+        s0_ticks_remaining--;
+        if (s0_ticks_remaining == 0) {
+            LATBbits.LATB2 = 0;  /* Turn off S0 pulse */
         }
     }
 }
 
-/**
- * @brief Detect rotation from LC tank state transitions
- * 
- * The water meter disc is half metal (180 deg) with two LC tank inductors
- * placed 120 deg apart. This creates 2 state transitions per half rotation:
- *   - Transition into STATE_TRANSITION (both sensors see metal or both see no metal)
- *   - Transition out of STATE_TRANSITION (one sensor changes)
- * 
- * With 0.5L resolution: Generate S0 pulse on each transition INTO STATE_TRANSITION
- * This gives 2 pulses per full rotation = 0.5 liters per pulse
- */
-static bool WaterMeter_DetectRotation(void)
+/* Start S0 pulse - call when rotation detected */
+static void S0_Pulse(void)
 {
-    bool rotation_detected = false;
+    LATBbits.LATB2 = 1;  /* Turn on S0 immediately */
+    s0_ticks_remaining = S0_PULSE_DURATION_TICKS;  /* TMR0 ISR will turn it off */
+}
+
+/* Comparator ISR callbacks */
+static void CMP1_Callback(void)
+{
+    cmp1_count++;
+}
+
+static void CMP2_Callback(void)
+{
+    cmp2_count++;
+}
+
+static uint8_t MeasureTankPolled(uint8_t tank);
+static uint8_t MeasureTank(uint8_t tank);
+
+static void SetCVRef(uint8_t cvr)
+{
+    current_cvref = (uint8_t)(cvr & 0x1FU);
+    CVRCON = (uint8_t)(0x80U | current_cvref);
+    __delay_us(50);
+}
+
+static uint16_t SpanDrop(uint16_t baseline, uint16_t span)
+{
+    return (baseline > span) ? (uint16_t)(baseline - span) : 0U;
+}
+
+static uint16_t UpdateBaseline(uint16_t baseline, uint16_t sample)
+{
+    if (sample >= baseline) {
+        return (uint16_t)(((uint32_t)baseline * ((1UL << SPAN_BASELINE_RISE_SHIFT) - 1UL) + (uint32_t)sample + (1UL << (SPAN_BASELINE_RISE_SHIFT - 1U))) >> SPAN_BASELINE_RISE_SHIFT);
+    }
+
+    if ((uint16_t)(baseline - sample) <= SPAN_BASELINE_TRIM_GUARD) {
+        return (uint16_t)(baseline - 1U);
+    }
+
+    return baseline;
+}
+
+static bool ApplyTemporalHold(bool instantaneous_active, bool previous_active, uint8_t *below_counter, uint8_t release_samples)
+{
+    if (instantaneous_active) {
+        *below_counter = 0U;
+        return true;
+    }
+
+    if (!previous_active) {
+        *below_counter = 0U;
+        return false;
+    }
+
+    *below_counter = (uint8_t)(*below_counter + 1U);
+    if (*below_counter < release_samples) {
+        return true;
+    }
+
+    *below_counter = 0U;
+    return false;
+}
+
+static int8_t ProcessQuadratureSequence(uint8_t previous_state, uint8_t new_state)
+{
+    const uint8_t *sequence = NULL;
+
+    if (new_state == previous_state) {
+        return 0;
+    }
+
+    if (sequence_direction == 0U) {
+        if (!sequence_armed) {
+            return 0;
+        }
+
+        if ((previous_state == 0U) && (new_state == 2U)) {
+            sequence_direction = 1U;
+            sequence_progress = 1U;
+        } else if ((previous_state == 0U) && (new_state == 1U)) {
+            sequence_direction = 2U;
+            sequence_progress = 1U;
+        }
+        return 0;
+    }
+
+    sequence = (sequence_direction == 1U) ? forward_sequence : reverse_sequence;
+    if ((sequence_progress < 4U) && (new_state == sequence[sequence_progress + 1U])) {
+        sequence_progress++;
+        if (sequence_progress == 4U) {
+            int8_t direction = (sequence_direction == 1U) ? +1 : -1;
+
+            sequence_direction = 0U;
+            sequence_progress = 0U;
+            return direction;
+        }
+        return 0;
+    }
+
+    /* Mounted traces often bounce one Gray step backward before resuming.
+     * Tolerate that adjacent backtracking instead of discarding the whole pass. */
+    if ((sequence_progress > 1U) && (new_state == sequence[sequence_progress - 1U])) {
+        sequence_progress--;
+        return 0;
+    }
+
+    if (new_state == 0U) {
+        sequence_direction = 0U;
+        sequence_progress = 0U;
+        return 0;
+    }
+
+    /* Any out-of-order transition means the current pass is ambiguous. */
+    sequence_direction = 0U;
+    sequence_progress = 0U;
+    return 0;
+}
+
+static uint8_t DetermineMetalStateFromSpan(uint16_t lca_span, uint16_t lcb_span, uint8_t previous_state)
+{
+    bool previous_lca_metal = ((previous_state & 2U) != 0U);
+    bool previous_lcb_metal = ((previous_state & 1U) != 0U);
+    bool pass_in_progress = (previous_state != 0U);
+    uint16_t lca_drop = SpanDrop(lca_span_baseline, lca_span);
+    uint16_t lcb_drop = SpanDrop(lcb_span_baseline, lcb_span);
+    uint16_t lca_threshold = previous_lca_metal ? LCA_DROP_HOLD : (pass_in_progress ? LCA_DROP_JOIN : LCA_DROP_ENTER);
+    uint16_t lcb_threshold = previous_lcb_metal ? LCB_DROP_HOLD : (pass_in_progress ? LCB_DROP_JOIN : LCB_DROP_ENTER);
+    uint16_t dominance_threshold = ((previous_state == 0U) ? DROP_DOMINANCE_ENTER : DROP_DOMINANCE_HOLD);
+    bool lca_active = ApplyTemporalHold((lca_drop >= lca_threshold), previous_lca_metal, &lca_below_threshold_samples, LCA_RELEASE_SAMPLES);
+    bool lcb_active = ApplyTemporalHold((lcb_drop >= lcb_threshold), previous_lcb_metal, &lcb_below_threshold_samples, LCB_RELEASE_SAMPLES);
+
+    if (lca_active && lcb_active) {
+        if ((previous_state == 1U) || (previous_state == 2U) || (previous_state == 3U)) {
+            return 3U;
+        }
+
+        if (lca_drop >= (uint16_t)(lcb_drop + dominance_threshold)) {
+            return 2U;
+        }
+        if (lcb_drop >= (uint16_t)(lca_drop + dominance_threshold)) {
+            return 1U;
+        }
+        return 3U;
+    }
+
+    if (lca_active) {
+        return 2U;
+    }
+    if (lcb_active) {
+        return 1U;
+    }
+    return 0U;
+}
+
+static void ADC_InitializeRawCapture(void)
+{
+    ADCON1 = 0x00;               /* Vref = VDD/VSS, manual trigger */
+    ADCON2 = ADCON2_RAW_CAPTURE; /* Right-justified, long auto acquisition */
+    ADCON0 = 0x01;               /* ADON=1, channel will be selected per read */
+}
+
+static uint16_t ADC_ReadChannel(uint8_t channel)
+{
+    ADCON0 = (uint8_t)(((uint8_t)(channel << 2U)) | 0x01U);
+    ADCON0bits.GO_nDONE = 1;
+    while (ADCON0bits.GO_nDONE) {
+    }
+    /* PIC18F25K80 ADC is 10-bit; upper bits are not part of the conversion. */
+    return ((uint16_t)ADRES) & 0x03FFU;
+}
+
+static uint16_t MeasureTankRawADC(uint8_t tank, uint16_t *sample_min_out, uint16_t *sample_max_out)
+{
+    uint8_t sample_index;
+    uint8_t adc_channel = (tank == 1U) ? ADC_CHANNEL_LCA : ADC_CHANNEL_LCB;
+    uint16_t sample_min = 0x03FFU;
+    uint16_t sample_max = 0U;
+    uint8_t saved_pie1 = PIE1;
+    uint8_t saved_pie4 = PIE4;
+    uint8_t saved_tmr0ie = INTCONbits.TMR0IE;
+    uint8_t saved_cm1con = CM1CON;
+    uint8_t saved_cm2con = CM2CON;
+
+    /* PHASE 1: DRAIN - discharge tank */
+    if (tank == 1U) {
+        TRISCbits.TRISC5 = 0;
+        LATCbits.LATC5 = 0;
+    } else {
+        TRISCbits.TRISC0 = 0;
+        LATCbits.LATC0 = 0;
+    }
+    __delay_us(DRAIN_TIME_US);
+
+    /* PHASE 2: EXCITE - pulse HIGH */
+    if (tank == 1U) {
+        LATCbits.LATC5 = 1;
+    } else {
+        LATCbits.LATC0 = 1;
+    }
+    __delay_us(EXCITE_TIME_US);
+
+    /* Quiet unrelated ISRs while sampling the analog node directly. */
+    PIE1bits.TX1IE = 0;
+    PIE1bits.RC1IE = 0;
+    PIE4bits.CMP1IE = 0;
+    PIE4bits.CMP2IE = 0;
+    INTCONbits.TMR0IE = 0;
+
+    /* Raw capture should sample the pin, not a comparator-loaded mux state. */
+    CM1CONbits.CON = 0;
+    CM2CONbits.CON = 0;
+    __delay_us(5);
+
+    /* PHASE 3: HIZ + SAMPLE - release tank and sample raw node with ADC. */
+    if (tank == 1U) {
+        PIR4bits.CMP2IF = 0;
+        TRISCbits.TRISC5 = 1;
+    } else {
+        PIR4bits.CMP1IF = 0;
+        TRISCbits.TRISC0 = 1;
+    }
+
+    /* Throw away the first sample after release so the sample capacitor settles. */
+    (void)ADC_ReadChannel(adc_channel);
+
+    for (sample_index = 0U; sample_index < ADC_RAW_SAMPLES; sample_index++) {
+        uint16_t sample = ADC_ReadChannel(adc_channel);
+
+        if (sample < sample_min) {
+            sample_min = sample;
+        }
+        if (sample > sample_max) {
+            sample_max = sample;
+        }
+    }
+
+    /* PHASE 4: DRAIN - return to LOW */
+    if (tank == 1U) {
+        TRISCbits.TRISC5 = 0;
+        LATCbits.LATC5 = 0;
+    } else {
+        TRISCbits.TRISC0 = 0;
+        LATCbits.LATC0 = 0;
+    }
+
+    CM1CON = saved_cm1con;
+    CM2CON = saved_cm2con;
+    PIR4bits.CMP1IF = 0;
+    PIR4bits.CMP2IF = 0;
+
+    PIE1 = saved_pie1;
+    PIE4 = saved_pie4;
+    INTCONbits.TMR0IE = saved_tmr0ie;
+
+    if (sample_min_out != NULL) {
+        *sample_min_out = sample_min;
+    }
+    if (sample_max_out != NULL) {
+        *sample_max_out = sample_max;
+    }
+
+    return (uint16_t)(sample_max - sample_min);
+}
+
+static void CaptureDiagnosticSweep(void)
+{
+    uint8_t point_index;
+    uint8_t saved_cvref = current_cvref;
+
+    for (point_index = 0U; point_index < DIAGNOSTIC_SWEEP_POINT_COUNT; point_index++) {
+        SetCVRef(diagnostic_cvr_points[point_index]);
+        diagnostic_lca_counts[point_index] = MeasureTank(1);
+        diagnostic_apl_counts[point_index] = MeasureTankPolled(1);
+        diagnostic_raw_spans_a[point_index] = MeasureTankRawADC(1, NULL, NULL);
+        __delay_us(100);
+        diagnostic_lcb_counts[point_index] = MeasureTank(2);
+        diagnostic_bpl_counts[point_index] = MeasureTankPolled(2);
+        diagnostic_raw_spans_b[point_index] = MeasureTankRawADC(2, NULL, NULL);
+    }
+
+    SetCVRef(saved_cvref);
+}
+
+static void RunDiagnosticSweep(void)
+{
+    CaptureDiagnosticSweep();
+    diagnostic_sweep_ready = true;
+}
+
+static uint8_t MeasureTankPolled(uint8_t tank)
+{
+    uint8_t transitions = 0;
+    uint8_t last_tick;
+    uint8_t tick_delta;
+    uint16_t remaining_ticks = (MEASURE_TIME_US / 2U);
+    bool last_state;
+    uint8_t saved_pie1 = PIE1;
+    uint8_t saved_pie4 = PIE4;
+    uint8_t saved_tmr0ie = INTCONbits.TMR0IE;
+
+    /* PHASE 1: DRAIN - discharge tank */
+    if (tank == 1) {
+        TRISCbits.TRISC5 = 0;
+        LATCbits.LATC5 = 0;
+    } else {
+        TRISCbits.TRISC0 = 0;
+        LATCbits.LATC0 = 0;
+    }
+    __delay_us(DRAIN_TIME_US);
+
+    /* PHASE 2: EXCITE - pulse HIGH */
+    if (tank == 1) {
+        LATCbits.LATC5 = 1;
+    } else {
+        LATCbits.LATC0 = 1;
+    }
+    __delay_us(EXCITE_TIME_US);
+
+    /* TMR0 runs from Fosc/4 with 1:8 prescale, so TMR0L advances every ~2 us. */
+    /* Disable unrelated ISR noise while sampling comparator output on each TMR0 tick. */
+    PIE1bits.TX1IE = 0;
+    PIE1bits.RC1IE = 0;
+    PIE4bits.CMP1IE = 0;
+    PIE4bits.CMP2IE = 0;
+    INTCONbits.TMR0IE = 0;
+
+    /* PHASE 3: HIZ + POLL - release and sample comparator output every 2 us TMR0 tick */
+    if (tank == 1) {
+        PIR4bits.CMP2IF = 0;
+        TRISCbits.TRISC5 = 1;
+        last_state = CMSTATbits.CMP2OUT;
+    } else {
+        PIR4bits.CMP1IF = 0;
+        TRISCbits.TRISC0 = 1;
+        last_state = CMSTATbits.CMP1OUT;
+    }
+
+    last_tick = TMR0L;
+
+    while (remaining_ticks > 0U) {
+        uint8_t tick = TMR0L;
+
+        tick_delta = (uint8_t)(tick - last_tick);
+        if (tick_delta == 0U) {
+            continue;
+        }
+
+        last_tick = tick;
+        if (tick_delta > remaining_ticks) {
+            tick_delta = (uint8_t)remaining_ticks;
+        }
+        remaining_ticks -= tick_delta;
+
+        bool state = (tank == 1) ? CMSTATbits.CMP2OUT : CMSTATbits.CMP1OUT;
+        if (state != last_state) {
+            if (transitions != UINT8_MAX) {
+                transitions++;
+            }
+            last_state = state;
+        }
+    }
+
+    /* PHASE 4: DRAIN - return to LOW */
+    if (tank == 1) {
+        TRISCbits.TRISC5 = 0;
+        LATCbits.LATC5 = 0;
+    } else {
+        TRISCbits.TRISC0 = 0;
+        LATCbits.LATC0 = 0;
+    }
+
+    /* Drop any comparator flags generated during the polled window before re-enabling IRQs. */
+    PIR4bits.CMP1IF = 0;
+    PIR4bits.CMP2IF = 0;
+
+    PIE1 = saved_pie1;
+    PIE4 = saved_pie4;
+    INTCONbits.TMR0IE = saved_tmr0ie;
+
+    return transitions;
+}
+
+/**
+ * @brief Measure LC tank using GPIO HiZ mode (TI TIDA-010050 style)
+ * 
+ * Sequence:
+ *   1. DRAIN: GPIO LOW (output) - discharge tank
+ *   2. EXCITE: GPIO HIGH (output) - pulse to kick tank
+ *   3. HIZ: GPIO INPUT - let tank ring freely with no loading
+ *   4. COUNT: Comparator interrupts count edge crossings
+ *   5. DRAIN: GPIO LOW - ready for next cycle
+ * 
+ * @param tank 1=LCA (RC5/CMP2), 2=LCB (RC0/CMP1)
+ * @return Edge count during measurement window
+ */
+static uint8_t MeasureTank(uint8_t tank)
+{
+    volatile uint16_t *edge_counter;
     
-    // Detect transition INTO STATE_TRANSITION state
-    // This occurs twice per rotation (half-metal disc, 120 deg inductor offset)
-    // Each transition = 0.5 liter of water flow
+    /* Disable UART interrupts during measurement */
+    uint8_t saved_pie1 = PIE1;
+    PIE1bits.TX1IE = 0;
+    PIE1bits.RC1IE = 0;
     
-    if (meter_ctx.previous_state != STATE_TRANSITION && 
-        meter_ctx.current_state == STATE_TRANSITION) {
-        // Valid transition detected - generate S0 pulse immediately
-        // Resolution: 0.5 liters per pulse (2 pulses per rotation)
-        rotation_detected = true;
-        meter_ctx.rotation_count++;  // Counts half-rotations now
-        WaterMeter_GenerateS0Pulse();
+    /* Select comparator based on CCH=10 cross-mapping:
+     * CMP1 → RA5 (LCB sense), CMP2 → RB1 (LCA sense) */
+    if (tank == 1) {
+        edge_counter = &cmp2_count;  /* LCA uses CMP2 */
+    } else {
+        edge_counter = &cmp1_count;  /* LCB uses CMP1 */
     }
     
-    return rotation_detected;
+    /* PHASE 1: DRAIN - discharge tank */
+    if (tank == 1) {
+        TRISCbits.TRISC5 = 0;  /* Output */
+        LATCbits.LATC5 = 0;    /* LOW */
+    } else {
+        TRISCbits.TRISC0 = 0;
+        LATCbits.LATC0 = 0;
+    }
+    __delay_us(DRAIN_TIME_US);
+    
+    /* PHASE 2: EXCITE - pulse HIGH */
+    if (tank == 1) {
+        LATCbits.LATC5 = 1;
+    } else {
+        LATCbits.LATC0 = 1;
+    }
+    __delay_us(EXCITE_TIME_US);
+    
+    /* PHASE 3: HIZ + COUNT - go directly to input mode */
+    *edge_counter = 0;
+    if (tank == 1) {
+        PIR4bits.CMP2IF = 0;
+        TRISCbits.TRISC5 = 1;  /* INPUT = High-Z */
+    } else {
+        PIR4bits.CMP1IF = 0;
+        TRISCbits.TRISC0 = 1;
+    }
+    
+    /* Wait for oscillations */
+    __delay_us(MEASURE_TIME_US);
+    
+    uint8_t edges = (uint8_t)(*edge_counter);
+    
+    /* PHASE 4: DRAIN - return to LOW */
+    if (tank == 1) {
+        TRISCbits.TRISC5 = 0;
+        LATCbits.LATC5 = 0;
+    } else {
+        TRISCbits.TRISC0 = 0;
+        LATCbits.LATC0 = 0;
+    }
+    
+    /* Restore UART */
+    PIE1 = saved_pie1;
+    
+    return edges;
 }
 
 void WaterMeter_Initialize(void)
 {
-    // Initialize state machine
-    meter_ctx.current_state = STATE_INVALID;
-    meter_ctx.previous_state = STATE_INVALID;
-    meter_ctx.rotation_count = 0;
-    meter_ctx.s0_pulse_active = false;
-    meter_ctx.s0_pulse_width = 0;
-    meter_ctx.transition_counter = 0;
-    meter_ctx.last_valid_transition = false;
+    /* CRITICAL: Sense pins must be in ANALOG mode for comparators to work!
+     * ANSEL bit: 0=analog, 1=digital */
+    ANCON1 &= ~0x01;       /* ANSEL8=0 → RB1 (AN8) = ANALOG */
+    ANCON0 &= ~(1 << 4);   /* ANSEL4=0 → RA5 (AN4) = ANALOG */
     
-    // Initialize S0 output (RB2)
-    S0_SetDigitalOutput();
-    S0_SetLow();  // Ensure S0 starts low
+    /* Configure comparators:
+     * - Both enabled, internal output only
+     * - CREF=1: CVref on non-inverting (+) input
+     * - CCH=10: Cross-mapped channels (see datasheet Note 2)
+     *   CMP1 → C2INB (RA5) = LCB
+     *   CMP2 → C1INB (RB1) = LCA
+     * - EVPOL=11: Interrupt on any edge */
+    CM1CON = 0x9E;  /* ON, EVPOL=11, CREF=1, CCH=10 */
+    CM2CON = 0x9E;
     
-    // Initialize comparators
-    CMP1_Initialize();
-    CMP2_Initialize();
-    CMP1_Enable();
-    CMP2_Enable();
+    /* Set CVref to 2.5V (optimal for 330k+330k bias divider) */
+    SetCVRef(CVR_OPTIMAL);
+
+    /* Initialize ADC path for comparator-free raw-node capture. */
+    ADC_InitializeRawCapture();
     
-    // Register comparator interrupt callbacks
-    CMP1_InterruptCallbackRegister(WaterMeter_CMP1_Callback);
-    CMP2_InterruptCallbackRegister(WaterMeter_CMP2_Callback);
+    /* Register comparator callbacks */
+    CMP1_InterruptCallbackRegister(CMP1_Callback);
+    CMP2_InterruptCallbackRegister(CMP2_Callback);
     
-    // Start TMR0 for sleep timing and S0 pulse control
-    TMR0_OverflowCallbackRegister(WaterMeter_TMR0_Callback);
-    TMR0_Start();
+    /* Enable comparator interrupts */
+    PIR4bits.CMP1IF = 0;
+    PIR4bits.CMP2IF = 0;
+    PIE4bits.CMP1IE = 1;
+    PIE4bits.CMP2IE = 1;
     
-    // Read initial state
-    WaterMeter_UpdateState();
+    /* Configure drive pins as outputs, start LOW */
+    TRISCbits.TRISC5 = 0;  /* RC5 = LCA drive */
+    TRISCbits.TRISC0 = 0;  /* RC0 = LCB drive */
+    LATCbits.LATC5 = 0;
+    LATCbits.LATC0 = 0;
+    
+    /* Configure S0 output (RB2) */
+    TRISBbits.TRISB2 = 0;
+    LATBbits.LATB2 = 0;
+    
+    /* Register TMR0 callback for S0 pulse timing */
+    TMR0_OverflowCallbackRegister(S0_TimerCallback);
+    
+    /* Take initial readings to establish air baseline and state. */
+    lca_count = MeasureTank(1);
+    lca_polled_count = MeasureTankPolled(1);
+    lca_raw_span = MeasureTankRawADC(1, &lca_raw_min, &lca_raw_max);
+    __delay_us(100);
+    lcb_count = MeasureTank(2);
+    lcb_raw_span = MeasureTankRawADC(2, NULL, NULL);
+
+    lca_span_baseline = lca_raw_span;
+    lcb_span_baseline = lcb_raw_span;
+    current_state = DetermineMetalStateFromSpan(lca_raw_span, lcb_raw_span, 0U);
+    air_rearm_count = (current_state == 0U) ? ROTATION_REARM_SAMPLES : 0U;
+    sequence_armed = (current_state == 0U);
+    lca_below_threshold_samples = 0U;
+    lcb_below_threshold_samples = 0U;
+
+    /* Capture a boot-time comparator sweep before the normal loop starts.
+     * This gives rev2 boards an immediate read on comparator viability. */
+    CaptureDiagnosticSweep();
 }
 
 bool WaterMeter_Process(void)
 {
     bool rotation_detected = false;
+    uint8_t previous_state;
+    int8_t direction;
     
-    // Store previous state
-    meter_ctx.previous_state = meter_ctx.current_state;
+    /* Measure both LC tanks using GPIO HiZ method */
+    lca_count = MeasureTank(1);
+    lca_polled_count = MeasureTankPolled(1);
+    lca_raw_span = MeasureTankRawADC(1, &lca_raw_min, &lca_raw_max);
+    __delay_us(100);  /* Brief gap between measurements */
+    lcb_count = MeasureTank(2);
+    lcb_raw_span = MeasureTankRawADC(2, NULL, NULL);
     
-    // Update current state from comparator outputs
-    WaterMeter_UpdateState();
+    /* Determine metal presence from span drop relative to the air baseline. */
+    previous_state = current_state;
+    last_rotation_direction = 0;
+
+    uint8_t new_state = DetermineMetalStateFromSpan(lca_raw_span, lcb_raw_span, current_state);
+    direction = ProcessQuadratureSequence(previous_state, new_state);
+    current_state = new_state;
     
-    // Detect rotation from state transitions
-    rotation_detected = WaterMeter_DetectRotation();
-    
-    // Handle S0 pulse timing
-    WaterMeter_HandleS0Pulse();
+    if (direction == +1) {
+        forward_count++;
+        last_rotation_direction = +1;
+        rotation_detected = true;
+        sequence_armed = false;
+        air_rearm_count = 0U;
+        S0_Pulse();
+    } else if (direction == -1) {
+        reverse_count++;
+        last_rotation_direction = -1;
+        rotation_detected = true;
+        sequence_armed = false;
+        air_rearm_count = 0U;
+    }
+
+    if (new_state == 0U) {
+        lca_span_baseline = UpdateBaseline(lca_span_baseline, lca_raw_span);
+        lcb_span_baseline = UpdateBaseline(lcb_span_baseline, lcb_raw_span);
+
+        if (air_rearm_count < ROTATION_REARM_SAMPLES) {
+            air_rearm_count++;
+        }
+        if (air_rearm_count >= ROTATION_REARM_SAMPLES) {
+            sequence_armed = true;
+        }
+    } else {
+        air_rearm_count = 0U;
+    }
+
+    if (++diagnostic_loop_divider >= DIAGNOSTIC_SWEEP_INTERVAL) {
+        diagnostic_loop_divider = 0;
+        RunDiagnosticSweep();
+    }
     
     return rotation_detected;
 }
 
-void WaterMeter_CMP1_Callback(void)
-{
-    /* CMP1 (LC Tank A) output changed during measurement */
-    if (measurement_active) {
-        oscillation_counter++;
-    }
-}
-
-void WaterMeter_CMP2_Callback(void)
-{
-    /* CMP2 (LC Tank B) output changed during measurement */
-    if (measurement_active) {
-        oscillation_counter++;
-    }
-}
-
 uint32_t WaterMeter_GetRotationCount(void)
 {
-    return meter_ctx.rotation_count;
+    return forward_count;  /* Return forward count as primary */
 }
 
-void WaterMeter_ResetCounter(void)
+uint32_t WaterMeter_GetForwardCount(void)
 {
-    meter_ctx.rotation_count = 0;
+    return forward_count;
 }
 
-bool WaterMeter_GetLCA_State(void)
+uint32_t WaterMeter_GetReverseCount(void)
 {
-    return meter_ctx.lca_state;
+    return reverse_count;
 }
 
-bool WaterMeter_GetLCB_State(void)
+int8_t WaterMeter_GetLastRotationDirection(void)
 {
-    return meter_ctx.lcb_state;
+    return last_rotation_direction;
 }
 
-/**
- * @brief Enter deep sleep mode with timer-based wakeup
- * 
- * Configures TMR0 interrupt period and puts device into sleep.
- * The device will wake up periodically to check for water meter rotation.
- * 
- * Q_3 = 2.5 m³/h specification:
- * - Maximum flow rate: 2500 L/h
- * - 1 rotation = 1 L
- * - Minimum time per rotation: 1.44 seconds
- * - Safe timeout: 1500ms minimum (1.5 seconds)
- */
-void WaterMeter_EnterDeepSleep(uint16_t timeout_ms)
+uint8_t WaterMeter_GetState(void)
 {
-    /* Validate timeout is at minimum safe value */
-    if (timeout_ms < SLEEP_TIMEOUT_MIN_MS) {
-        timeout_ms = SLEEP_TIMEOUT_MIN_MS;
-    }
-    
-    /* Ensure S0 pulse is complete before sleeping */
-    if (meter_ctx.s0_pulse_active) {
-        return;  /* Cannot sleep while pulse is active */
-    }
-    
-    sleep_ctx.sleep_timeout_ms = timeout_ms;
-    sleep_ctx.sleep_counter = 0;
-    sleep_ctx.sleep_enabled = true;
-    
-    /* Configure TMR0 for wake-up timing */
-    /* TMR0 generates interrupts every 100ms */
-    
-    /* Ensure comparators remain enabled during sleep */
-    CMP1_Enable();
-    CMP2_Enable();
-    
-    /* Clear any pending TMR0 interrupt */
-    INTCONbits.TMR0IF = 0;
-    
-    /* Enable TMR0 interrupt for periodic wakeup */
-    INTCONbits.TMR0IE = 1;
-    
-#if __DEBUG
-    /* Debug build: Use idle loop to allow debugger to function properly */
-    /* The TMR0 interrupt will increment sleep_counter every 100ms */
-    /* and will set sleep_enabled to false when timeout expires */
-    while (sleep_ctx.sleep_enabled) {
-        /* Idle here - interrupts are still enabled and will execute */
-        /* This allows TMR0 to count down and wake us when timeout expires */
-        Nop();
-    }
-#else
-    /* Release build: Use actual hardware sleep for maximum power savings */
-    /* The device will wake on TMR0 interrupt */
-    Sleep();
-#endif
-    
-    /* Execution continues here when timeout expires or device wakes */
-    sleep_ctx.sleep_enabled = false;
+    return current_state;
 }
 
-/**
- * @brief Check if system is in a state safe for sleep
- * 
- * Returns false if:
- * - S0 pulse is currently being generated
- * - A rotation was just detected (give time for pulse to complete)
- * - Device is not in idle state
- * 
- * @return true if safe to sleep, false otherwise
- */
-bool WaterMeter_CanSleep(void)
+uint8_t WaterMeter_GetLCA_Count(void)
 {
-    /* Cannot sleep while S0 pulse is active */
-    if (meter_ctx.s0_pulse_active) {
-        return false;
-    }
-    
-    /* Cannot sleep if comparators show activity */
-    if (meter_ctx.current_state != meter_ctx.previous_state) {
-        return false;  /* State just changed, give time to settle */
-    }
-    
-    return sleep_ctx.can_sleep;
+    return lca_count;
 }
 
-/**
- * @brief Update sleep timer (called from TMR0 ISR context)
- * 
- * This function should be called from the TMR0 overflow interrupt handler
- * to decrement the sleep counter and trigger actions when timeout expires.
- * 
- * @return true if sleep timeout has been reached, false otherwise
- */
-bool WaterMeter_UpdateSleepTimer(void)
+uint8_t WaterMeter_GetLCB_Count(void)
 {
-    if (!sleep_ctx.sleep_enabled) {
-        return false;
-    }
-    
-    sleep_ctx.sleep_counter++;
-    
-    /* Check if timeout has been reached */
-    if (sleep_ctx.sleep_counter >= sleep_ctx.sleep_timeout_ms) {
-        sleep_ctx.sleep_counter = 0;
-        return true;  /* Timeout reached, wakeup needed */
-    }
-    
-    return false;
+    return lcb_count;
 }
 
-/**
- * @brief Set sleep mode enabled state
- * 
- * @param enabled true to enable sleep mode, false to disable
- */
-void WaterMeter_SetSleepEnabled(bool enabled)
+uint8_t WaterMeter_GetLCA_PolledCount(void)
 {
-    sleep_ctx.sleep_enabled = enabled;
+    return lca_polled_count;
 }
 
-/**
- * @brief Get current sleep timeout value
- * 
- * @return Current sleep timeout in milliseconds
- */
-/**
- * @brief Get current sleep timeout value
- * 
- * @return Current sleep timeout in milliseconds
- */
-uint16_t WaterMeter_GetSleepTimeout(void)
+uint8_t WaterMeter_GetCVRef(void)
 {
-    return sleep_ctx.sleep_timeout_ms;
+    return current_cvref;
 }
 
-/**
- * @brief Set calibration threshold for LC Tank A
- * 
- * @param threshold Oscillation count threshold (typically 40 for 70% detection)
- */
-void WaterMeter_SetLCA_Threshold(uint8_t threshold)
+uint16_t WaterMeter_GetLCA_RawMin(void)
 {
-    meter_ctx.lca_threshold = threshold;
+    return lca_raw_min;
 }
 
-/**
- * @brief Set calibration threshold for LC Tank B
- * 
- * @param threshold Oscillation count threshold (typically 40 for 70% detection)
- */
-void WaterMeter_SetLCB_Threshold(uint8_t threshold)
+uint16_t WaterMeter_GetLCA_RawMax(void)
 {
-    meter_ctx.lcb_threshold = threshold;
+    return lca_raw_max;
 }
 
-/**
- * @brief Get last measured oscillation count for LC Tank A
- * 
- * @return Oscillation count from last measurement
- */
-uint8_t WaterMeter_GetLCA_OscillationCount(void)
+uint16_t WaterMeter_GetLCA_RawSpan(void)
 {
-    return meter_ctx.lca_oscillation_count;
+    return lca_raw_span;
 }
 
-/**
- * @brief Get last measured oscillation count for LC Tank B
- * 
- * @return Oscillation count from last measurement
- */
-uint8_t WaterMeter_GetLCB_OscillationCount(void)
+uint16_t WaterMeter_GetLCB_RawSpan(void)
 {
-    return meter_ctx.lcb_oscillation_count;
+    return lcb_raw_span;
 }
 
-/**
- * @brief TMR0 Interrupt Handler for Sleep Wake-up Timing
- * 
- * This ISR is called every 1ms (TMR0 interrupt period).
- * It decrements the sleep timeout counter and forces wake-up
- * when the timeout expires.
- */
-static void WaterMeter_TMR0_Callback(void)
+uint16_t WaterMeter_GetLCA_SpanBaseline(void)
 {
-    /* Handle sleep timing - TMR0 now interrupts every 100ms */
-    if (sleep_ctx.sleep_enabled) {
-        sleep_ctx.sleep_counter++;
-        
-        /* Check if sleep timeout has expired */
-        if (sleep_ctx.sleep_counter >= (sleep_ctx.sleep_timeout_ms / SLEEP_WAKEUP_GRANULE_MS)) {
-            /* Force device to wake by clearing sleep enable flag */
-            sleep_ctx.sleep_enabled = false;
-        }
-    }
-    
-    /* Handle S0 pulse timing - now at 100ms resolution */
-    if (meter_ctx.s0_pulse_active) {
-        meter_ctx.s0_pulse_width++;
-        if (meter_ctx.s0_pulse_width >= S0_PULSE_COUNTER) {
-            /* Pulse duration complete, deactivate S0 output */
-            S0_SetLow();
-            meter_ctx.s0_pulse_active = false;
-            meter_ctx.s0_pulse_width = 0;
-        }
-    }
+    return lca_span_baseline;
 }
 
-/**
- * @brief Get raw CMP1 comparator output status
- * 
- * Returns the direct output of the CMP1 comparator, useful for debugging.
- */
-bool WaterMeter_GetCMP1_Output(void) {
-    return CMP1_GetOutputStatus();
+uint16_t WaterMeter_GetLCB_SpanBaseline(void)
+{
+    return lcb_span_baseline;
 }
 
-/**
- * @brief Get raw CMP2 comparator output status
- * 
- * Returns the direct output of the CMP2 comparator, useful for debugging.
- */
-bool WaterMeter_GetCMP2_Output(void) {
-    return CMP2_GetOutputStatus();
+bool WaterMeter_IsDiagnosticSweepReady(void)
+{
+    return diagnostic_sweep_ready;
 }
 
-/**
- * @brief Run diagnostic test on LC tank hardware
- * 
- * Performs several checks:
- * 1. Verifies CVREF module is enabled
- * 2. Measures oscillation count range over 10 cycles
- * 3. Checks if oscillation counts are reasonable
- * 4. Verifies CVref voltage is in expected range
- */
-void WaterMeter_DiagnosticTest(void) {
-    printf("\n\r=== LC Tank Diagnostic Test ===\r\n");
-    
-    // Test 1: Verify CVREF enabled
-    uint8_t cvr_reg = CVRCON;
-    printf("CVRCON Register: 0x%02X\r\n", cvr_reg);
-    if (cvr_reg & 0x80) {
-        printf("  ✓ CVref module ENABLED\r\n");
-        printf("  ✓ CVref value: %d (generates ~%.2f V)\r\n", 
-               (cvr_reg & 0x0F), 
-               (float)(cvr_reg & 0x0F) * 5.0 / 32.0);
-    } else {
-        printf("  ✗ ERROR: CVref module DISABLED!\r\n");
-    }
-    
-    // Test 2: Verify comparators are initialized
-    printf("\r\nComparator Configuration:\r\n");
-    printf("  CM1CON: 0x%02X\r\n", CM1CON);
-    printf("  CM2CON: 0x%02X\r\n", CM2CON);
-    printf("  Interrupt Status: PIE4=0x%02X, PIR4=0x%02X\r\n", PIE4, PIR4);
-    printf("  Global Interrupts: GIE=%d, PEIE=%d\r\n", INTCONbits.GIE, INTCONbits.PEIE);
-    printf("\r\nLC Tank Parameters:\r\n");
-    printf("  L=1mH, C=2.2nF → f ≈ 107 kHz\r\n");
-    printf("  CVref threshold: ~1.87V (CVR=12)\r\n");
-    printf("  Measurement window: 6ms → expect ~640 oscillations if undamped\r\n");
-    
-    // Test output pin configuration
-    printf("\r\nOutput Pin Configuration:\r\n");
-    printf("  TRISC: 0x%02X\r\n", TRISC);
-    printf("  RC5 (LCA) TRIS: %d (0=output, 1=input)\r\n", TRISCbits.TRISC5);
-    printf("  RC0 (LCB) TRIS: %d (0=output, 1=input)\r\n", TRISCbits.TRISC0);
-    printf("  → CRITICAL: Both should be 0 (outputs) for pulsing to work!\r\n");
-    
-    // Test RC0 configuration and pulsing capability
-    // Note: RC0 does NOT have an ANSEL bit on PIC18F25K80. GPIO functionality
-    // is controlled by the SOSCSEL config bits (must be DIG for digital I/O).
-    printf("\r\nTesting RC0 (LCB drive) pin configuration:\r\n");
-    printf("  TRISC0 (direction): %d (0=output, 1=input)\r\n", TRISCbits.TRISC0);
-    printf("  Note: RC0 has no ANSEL bit; requires SOSCSEL=DIG config for GPIO\r\n");
-    
-    // Ensure RC0 is configured as output
-    TRISCbits.TRISC0 = 0;  // Output
-    
-    printf("\r\nAfter ensuring output mode:\r\n");
-    LCB_SetDigitalOutput();
-    LCB_SetLow();
-    __delay_ms(10);
-    printf("  RC0 LOW: LAT=%d, PORT=%d\r\n", LCB_GetValue(), PORTCbits.RC0);
-    LCB_SetHigh();
-    __delay_ms(10);
-    printf("  RC0 HIGH: LAT=%d, PORT=%d (should be LAT=1)\r\n", LCB_GetValue(), PORTCbits.RC0);
-    
-    // Try direct register write to bypass macro
-    LATC |= 0x01;  // Set bit 0 directly
-    __delay_ms(10);
-    printf("  RC0 after direct LATC write: LATC=0x%02X, PORT=%d\r\n", LATC, PORTCbits.RC0);
-    
-    // Extended RC0 hardware test
-    printf("\r\nRC0 Hardware Test:\r\n");
-    LATC &= ~0x01;  // Force LOW
-    __delay_ms(10);
-    uint8_t rc0_low = PORTCbits.RC0;
-    LATC |= 0x01;   // Force HIGH
-    __delay_ms(10);
-    uint8_t rc0_high = PORTCbits.RC0;
-    LATC &= ~0x01;  // Back to LOW
-    printf("  Test sequence: LOW->PORT=%d, HIGH->PORT=%d\r\n", rc0_low, rc0_high);
-    if (rc0_low == 0 && rc0_high == 0) {
-        printf("  ✗ RC0 STUCK LOW - Hardware fault (damaged pin or external short)\r\n");
-        printf("  → Measure voltage on RC0 pin - should be 0V if shorted to GND\r\n");
-        printf("  → Recommendation: Use different GPIO pin for LCB drive (RC1/RC2/RC3)\r\n");
-    } else if (rc0_low == 1 && rc0_high == 1) {
-        printf("  ✗ RC0 STUCK HIGH - Check for pull-up or short to VCC\r\n");
-    } else if (rc0_low == 0 && rc0_high == 1) {
-        printf("  ✓ RC0 works correctly\r\n");
-    }
-    
-    // Check if any peripheral module is controlling RC0
-    printf("\r\nChecking peripheral module states:\r\n");
-    printf("  OSCCON2: 0x%02X (bit 3 SOSCGO: %d = %s)\r\n",
-           OSCCON2, (OSCCON2 >> 3) & 0x01, ((OSCCON2 >> 3) & 0x01) ? "SOSC RUNNING - RC0 BLOCKED!" : "SOSC off");
-    printf("  SSPCON1 (SPI): 0x%02X (bit 5 SSPEN: %d = %s)\r\n", 
-           SSPCON1, (SSPCON1 >> 5) & 0x01, ((SSPCON1 >> 5) & 0x01) ? "SPI ENABLED" : "disabled");
-    printf("  T1CON (Timer1): 0x%02X (bit 3 T1OSCEN: %d = %s)\r\n",
-           T1CON, (T1CON >> 3) & 0x01, ((T1CON >> 3) & 0x01) ? "OSC ENABLED" : "disabled");
-    printf("  CM2CON (CMP2): 0x%02X (bit 2 COE: %d = %s)\r\n",
-           CM2CON, (CM2CON >> 2) & 0x01, ((CM2CON >> 2) & 0x01) ? "OUTPUT ENABLED" : "internal");
-    
-    LCB_SetLow();
-    printf("  → If LAT write fails, a peripheral has exclusive control of RC0.\r\n");
-    
-    // Test RB1 voltage level
-    printf("\r\nTesting RB1 (LCB sense) comparator:\r\n");
-    printf("  CMP2 output (RB1 vs CVref): %d (0=below 1.72V, 1=above 1.72V)\r\n", WaterMeter_GetCMP2_Output());
-    printf("  → If CMP2 is always 1, RB1 is stuck HIGH (>1.72V)\r\n");
-    printf("  → Check if LC Tank B circuit exists and is connected to RB1\r\n");
-    
-    // Test 3: Take 10 measurements and show range
-    printf("\r\nMeasuring oscillation counts (10 cycles)...\r\n");
-    uint8_t min_lca = 255, max_lca = 0;
-    uint8_t min_lcb = 255, max_lcb = 0;
-    uint32_t sum_lca = 0, sum_lcb = 0;
-    
-    // Single test measurement to debug
-    printf("DEBUG: Starting single measurement...\r\n");
-    printf("DEBUG: GIE=%d, PEIE=%d before measurement\r\n", INTCONbits.GIE, INTCONbits.PEIE);
-    printf("DEBUG: CMP1IE=%d, CMP2IE=%d (in PIE4)\r\n", PIE4bits.CMP1IE, PIE4bits.CMP2IE);
-    printf("DEBUG: Testing RC5 pulse: about to set HIGH...\r\n");
-    LCA_SetHigh();
-    printf("DEBUG: RC5 after SetHigh = %d, RA5 pin reads: %d\r\n", LCA_GetValue(), IO_RA5_GetValue());
-    LCA_SetLow();
-    printf("DEBUG: RC5 after SetLow = %d, RA5 pin reads: %d\r\n", LCA_GetValue(), IO_RA5_GetValue());
-    printf("DEBUG: CVref output (RA2) should be HIGH: %d\r\n", PORTAbits.RA2);
-    
-    for (int i = 0; i < 10; i++) {
-        uint8_t cmp1_before = WaterMeter_GetCMP1_Output();
-        uint8_t cmp2_before = WaterMeter_GetCMP2_Output();
-        
-        WaterMeter_UpdateState();
-        
-        uint8_t cmp1_after = WaterMeter_GetCMP1_Output();
-        uint8_t cmp2_after = WaterMeter_GetCMP2_Output();
-        
-        if (meter_ctx.lca_oscillation_count < min_lca) 
-            min_lca = meter_ctx.lca_oscillation_count;
-        if (meter_ctx.lca_oscillation_count > max_lca) 
-            max_lca = meter_ctx.lca_oscillation_count;
-        
-        if (meter_ctx.lcb_oscillation_count < min_lcb) 
-            min_lcb = meter_ctx.lcb_oscillation_count;
-        if (meter_ctx.lcb_oscillation_count > max_lcb) 
-            max_lcb = meter_ctx.lcb_oscillation_count;
-        
-        sum_lca += meter_ctx.lca_oscillation_count;
-        sum_lcb += meter_ctx.lcb_oscillation_count;
-        
-        printf("  [%d] LCA: %d  LCB: %d  (CMP1: %d→%d, CMP2: %d→%d)\r\n", i+1, 
-               meter_ctx.lca_oscillation_count, 
-               meter_ctx.lcb_oscillation_count,
-               cmp1_before, cmp1_after,
-               cmp2_before, cmp2_after);
-        
-        __delay_ms(100);
-    }
-    
-    printf("\r\nResults:\r\n");
-    printf("  LCA: min=%d, max=%d, avg=%d\r\n", min_lca, max_lca, (uint8_t)(sum_lca/10));
-    printf("  LCB: min=%d, max=%d, avg=%d\r\n", min_lcb, max_lcb, (uint8_t)(sum_lcb/10));
-    
-    // Health check
-    printf("\r\nHealth Status:\r\n");
-    if (max_lca < 15 || max_lcb < 15) {
-        printf("  ✗ CRITICAL: Oscillation counts too low (<15)\r\n");
-        printf("  → Check LC tank hardware (inductor/capacitor)\r\n");
-        printf("  → Check CVref is enabled and outputting voltage\r\n");
-        printf("  → Check RC5 and RC0 pins are in digital mode\r\n");
-    } else if (max_lca < 30 || max_lcb < 30) {
-        printf("  ⚠ WARNING: Low oscillation counts (<30)\r\n");
-        printf("  → Consider increasing LC_TANK_DRIVE_PULSE_US to 200-300µs\r\n");
-        printf("  → Check for noise/EMI on the board\r\n");
-    } else {
-        printf("  ✓ Good: Oscillation counts are healthy\r\n");
-    }
-    
-    // Check variance
-    uint8_t range_lca = max_lca - min_lca;
-    uint8_t range_lcb = max_lcb - min_lcb;
-    if (range_lca > 15 || range_lcb > 15) {
-        printf("  ⚠ WARNING: High variance in measurements (range > 15)\r\n");
-        printf("  → Suggests EMI or unstable power supply\r\n");
-    } else {
-        printf("  ✓ Good: Measurements are stable\r\n");
-    }
-    
-    printf("\r\nTo test metal detection:\r\n");
-    printf("  1. Note the oscillation counts above\r\n");
-    printf("  2. Bring ferrous metal (iron nail, screwdriver) near inductors\r\n");
-    printf("  3. Counts should drop by 20-50%% when metal is close\r\n");
-    printf("  4. Current threshold: %d (counts below this = metal detected)\r\n\r\n",
-           meter_ctx.lca_threshold);
+void WaterMeter_ClearDiagnosticSweepReady(void)
+{
+    diagnostic_sweep_ready = false;
 }
 
-/**
- * End of File
- */
+uint8_t WaterMeter_GetDiagnosticPointCount(void)
+{
+    return DIAGNOSTIC_SWEEP_POINT_COUNT;
+}
 
+uint8_t WaterMeter_GetDiagnosticCVRef(uint8_t index)
+{
+    if (index >= DIAGNOSTIC_SWEEP_POINT_COUNT) {
+        return 0U;
+    }
+    return diagnostic_cvr_points[index];
+}
+
+uint8_t WaterMeter_GetDiagnosticLCA(uint8_t index)
+{
+    if (index >= DIAGNOSTIC_SWEEP_POINT_COUNT) {
+        return 0U;
+    }
+    return diagnostic_lca_counts[index];
+}
+
+uint8_t WaterMeter_GetDiagnosticLCB(uint8_t index)
+{
+    if (index >= DIAGNOSTIC_SWEEP_POINT_COUNT) {
+        return 0U;
+    }
+    return diagnostic_lcb_counts[index];
+}
+
+uint8_t WaterMeter_GetDiagnosticAPl(uint8_t index)
+{
+    if (index >= DIAGNOSTIC_SWEEP_POINT_COUNT) {
+        return 0U;
+    }
+    return diagnostic_apl_counts[index];
+}
+
+uint8_t WaterMeter_GetDiagnosticBPl(uint8_t index)
+{
+    if (index >= DIAGNOSTIC_SWEEP_POINT_COUNT) {
+        return 0U;
+    }
+    return diagnostic_bpl_counts[index];
+}
+
+uint16_t WaterMeter_GetDiagnosticRawSpan(uint8_t index)
+{
+    if (index >= DIAGNOSTIC_SWEEP_POINT_COUNT) {
+        return 0U;
+    }
+    return diagnostic_raw_spans_a[index];
+}
+
+uint16_t WaterMeter_GetDiagnosticRawSpanB(uint8_t index)
+{
+    if (index >= DIAGNOSTIC_SWEEP_POINT_COUNT) {
+        return 0U;
+    }
+    return diagnostic_raw_spans_b[index];
+}

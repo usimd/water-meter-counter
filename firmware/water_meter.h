@@ -1,201 +1,196 @@
 /**
- * Water Meter Counter Module
+ * Water Meter Counter Module Header
  * 
- * @file water_meter.h
+ * Dual LC tank metal detection for water meter disc rotation sensing.
  * 
- * @brief This module counts water meter rotations using two LC tank circuits
- *        (CMP1 and CMP2) and outputs an S0 pulse interface.
- *        
- * The LC tank circuits provide resonance detection which transitions when
- * the meter mechanism rotates. The module detects these transitions and
- * generates pulse pulses on the S0 output.
- *
- * @version 1.0.0
+ * Hardware:
+ *   LCA: Drive=RC5, Sense=RB1 (CMP1)
+ *   LCB: Drive=RC0, Sense=RA5 (CMP2)
+ *   S0:  RB2 (pulse output)
  */
 
 #ifndef WATER_METER_H
 #define WATER_METER_H
 
-#include <stdint.h>
 #include <stdbool.h>
+#include <stdint.h>
 
 /**
- * @brief Water meter state enumeration
- */
-typedef enum {
-    STATE_LC_A_HIGH,      /**< LC Tank A is in high state */
-    STATE_LC_B_HIGH,      /**< LC Tank B is in high state */
-    STATE_TRANSITION,     /**< Transition detected between tanks */
-    STATE_INVALID         /**< Invalid or unknown state */
-} water_meter_state_t;
-
-/**
- * @brief Initialize the water meter counter module
+ * @brief Initialize water meter module
  * 
- * This function initializes the state machine, comparator callbacks,
- * and prepares the S0 output interface.
+ * Configures comparators, ANSEL bits, drive pins, and registers callbacks.
+ * Must be called after SYSTEM_Initialize().
  */
 void WaterMeter_Initialize(void);
 
 /**
- * @brief Process the water meter counter logic
+ * @brief Process water meter readings
  * 
- * This function should be called periodically in the main loop to
- * process the state machine and generate S0 pulses.
+ * Measures both LC tanks and detects metal presence transitions.
+ * Raw ADC span is the primary metal-state input; comparator counts are kept
+ * as diagnostics.
+ * Counts a rotation only after a complete Gray-code cycle returns to air.
+ * Generates S0 pulse on forward rotation detection.
+ * Should be called periodically from main loop (~100ms interval).
  * 
- * @return true if a full rotation was detected, false otherwise
+ * @return true if rotation was detected, false otherwise
  */
 bool WaterMeter_Process(void);
 
 /**
- * @brief Handle CMP1 (LC Tank A) interrupt
- * 
- * This callback is triggered when the LC Tank A resonance state changes.
- */
-void WaterMeter_CMP1_Callback(void);
-
-/**
- * @brief Handle CMP2 (LC Tank B) interrupt
- * 
- * This callback is triggered when the LC Tank B resonance state changes.
- */
-void WaterMeter_CMP2_Callback(void);
-
-/**
- * @brief Get the current rotation count
- * 
- * @return Number of full meter rotations detected
+ * @brief Get total forward rotation count
+ * @return Number of forward disc rotations (LCA leads in the mounted configuration)
  */
 uint32_t WaterMeter_GetRotationCount(void);
 
 /**
- * @brief Reset the rotation counter
+ * @brief Get forward rotation count
+ * @return Number of forward disc rotations (LCA leads in the mounted configuration)
  */
-void WaterMeter_ResetCounter(void);
+uint32_t WaterMeter_GetForwardCount(void);
 
 /**
- * @brief Get current state of LC Tank A
- * 
- * @return true if LC Tank A is in high state, false otherwise
+ * @brief Get reverse rotation count
+ * @return Number of reverse disc rotations (LCB leads in the mounted configuration)
  */
-bool WaterMeter_GetLCA_State(void);
+uint32_t WaterMeter_GetReverseCount(void);
 
 /**
- * @brief Get current state of LC Tank B
- * 
- * @return true if LC Tank B is in high state, false otherwise
+ * @brief Get direction of the most recently completed rotation event
+ * @return +1 for forward, -1 for reverse, 0 for no event in the last process call
  */
-bool WaterMeter_GetLCB_State(void);
+int8_t WaterMeter_GetLastRotationDirection(void);
 
 /**
- * @brief Enable deep sleep mode with timer wakeup
- * 
- * Puts the PIC18 into sleep mode and uses TMR0 to wake up periodically
- * to check for water meter rotation. The wakeup period is calculated based
- * on Q_3 flow rate (2.5 m³/h) to ensure no rotation is missed.
- * 
- * Minimum timeout: 1500ms (1.5 seconds) to accommodate maximum flow rate
- * which is 1 liter per 1.44 seconds.
- * 
- * @param timeout_ms Timeout in milliseconds (minimum 1500ms recommended)
+ * @brief Get current Gray code state
+ * @return State 0-3: (LCA_metal<<1) | LCB_metal
  */
-void WaterMeter_EnterDeepSleep(uint16_t timeout_ms);
+uint8_t WaterMeter_GetState(void);
 
 /**
- * @brief Check if we should enter sleep mode
- * 
- * Returns true if system is idle and safe to sleep
- * 
- * @return true if sleep is allowed, false otherwise
+ * @brief Get last LCA oscillation count
+ * @return Edge count from last LCA measurement
  */
-bool WaterMeter_CanSleep(void);
+uint8_t WaterMeter_GetLCA_Count(void);
 
 /**
- * @brief Update sleep timer (called from TMR0 ISR context)
- * 
- * This function should be called from the TMR0 overflow interrupt handler
- * to decrement the sleep counter and trigger actions when timeout expires.
- * 
- * @return true if sleep timeout has been reached, false otherwise
+ * @brief Get last LCB oscillation count
+ * @return Edge count from last LCB measurement
  */
-bool WaterMeter_UpdateSleepTimer(void);
+uint8_t WaterMeter_GetLCB_Count(void);
 
 /**
- * @brief Set sleep mode enabled state
- * 
- * @param enabled true to enable sleep mode, false to disable
+ * @brief Get last LCA polled transition count
+ * @return Comparator output transitions seen by tight polling during LCA measurement
  */
-void WaterMeter_SetSleepEnabled(bool enabled);
+uint8_t WaterMeter_GetLCA_PolledCount(void);
 
 /**
- * @brief Get current sleep timeout value
- * 
- * @return Current sleep timeout in milliseconds
+ * @brief Get current comparator reference setting
+ * @return Current CVR value written to CVRCON
  */
-uint16_t WaterMeter_GetSleepTimeout(void);
+uint8_t WaterMeter_GetCVRef(void);
 
 /**
- * @brief Set calibration threshold for LC Tank A metal detection
- * 
- * Oscillation count below this threshold indicates metal is present.
- * Default: ~70% of maximum oscillation count (typically ~40 counts).
- * 
- * @param threshold Oscillation count threshold for metal detection
+ * @brief Get last raw ADC minimum sample from LCA ring-down capture
+ * @return Minimum ADC code seen during the last LCA raw capture
  */
-void WaterMeter_SetLCA_Threshold(uint8_t threshold);
+uint16_t WaterMeter_GetLCA_RawMin(void);
 
 /**
- * @brief Set calibration threshold for LC Tank B metal detection
- * 
- * Oscillation count below this threshold indicates metal is present.
- * Default: ~70% of maximum oscillation count (typically ~40 counts).
- * 
- * @param threshold Oscillation count threshold for metal detection
+ * @brief Get last raw ADC maximum sample from LCA ring-down capture
+ * @return Maximum ADC code seen during the last LCA raw capture
  */
-void WaterMeter_SetLCB_Threshold(uint8_t threshold);
+uint16_t WaterMeter_GetLCA_RawMax(void);
 
 /**
- * @brief Get last measured oscillation count for LC Tank A
- * 
- * Useful for calibration and debugging.
- * 
- * @return Number of oscillations measured in last cycle
+ * @brief Get last raw ADC span from LCA ring-down capture
+ * @return max-min ADC code seen during the last LCA raw capture
  */
-uint8_t WaterMeter_GetLCA_OscillationCount(void);
+uint16_t WaterMeter_GetLCA_RawSpan(void);
 
 /**
- * @brief Get last measured oscillation count for LC Tank B
- * 
- * Useful for calibration and debugging.
- * 
- * @return Number of oscillations measured in last cycle
+ * @brief Get last raw ADC span from LCB ring-down capture
+ * @return max-min ADC code seen during the last LCB raw capture
  */
-uint8_t WaterMeter_GetLCB_OscillationCount(void);
+uint16_t WaterMeter_GetLCB_RawSpan(void);
 
 /**
- * @brief Get raw CMP1 comparator output status
- * 
- * @return true if CMP1 output is high, false otherwise
+ * @brief Get tracked air baseline for the LCA raw span
+ * @return Slowly tracked baseline span for channel A
  */
-bool WaterMeter_GetCMP1_Output(void);
+uint16_t WaterMeter_GetLCA_SpanBaseline(void);
 
 /**
- * @brief Get raw CMP2 comparator output status
- * 
- * @return true if CMP2 output is high, false otherwise
+ * @brief Get tracked air baseline for the LCB raw span
+ * @return Slowly tracked baseline span for channel B
  */
-bool WaterMeter_GetCMP2_Output(void);
+uint16_t WaterMeter_GetLCB_SpanBaseline(void);
 
 /**
- * @brief Run diagnostic test on LC tank hardware
- * 
- * Tests CVref configuration and measures oscillation count ranges.
- * Should be called once at startup to verify hardware is working.
- * Prints results to UART.
+ * @brief Check whether a new CVREF sweep result is available
+ * @return true if the latest sweep has not been consumed yet
  */
-void WaterMeter_DiagnosticTest(void);
+bool WaterMeter_IsDiagnosticSweepReady(void);
 
-#endif // WATER_METER_H
 /**
- * End of File
+ * @brief Mark the current CVREF sweep results as consumed
  */
+void WaterMeter_ClearDiagnosticSweepReady(void);
+
+/**
+ * @brief Get number of points in the periodic CVREF sweep
+ * @return Number of sweep points currently populated
+ */
+uint8_t WaterMeter_GetDiagnosticPointCount(void);
+
+/**
+ * @brief Get CVREF value for a sweep point
+ * @param index Sweep point index
+ * @return CVR value for the requested sweep point, or 0 if out of range
+ */
+uint8_t WaterMeter_GetDiagnosticCVRef(uint8_t index);
+
+/**
+ * @brief Get ISR edge count for the A-channel sweep point
+ * @param index Sweep point index
+ * @return LCA comparator ISR edge count, or 0 if out of range
+ */
+uint8_t WaterMeter_GetDiagnosticLCA(uint8_t index);
+
+/**
+ * @brief Get ISR edge count for the B-channel sweep point
+ * @param index Sweep point index
+ * @return LCB comparator ISR edge count, or 0 if out of range
+ */
+uint8_t WaterMeter_GetDiagnosticLCB(uint8_t index);
+
+/**
+ * @brief Get polled comparator transition count for the A-channel sweep point
+ * @param index Sweep point index
+ * @return LCA polled transition count, or 0 if out of range
+ */
+uint8_t WaterMeter_GetDiagnosticAPl(uint8_t index);
+
+/**
+ * @brief Get polled comparator transition count for the B-channel sweep point
+ * @param index Sweep point index
+ * @return LCB polled transition count, or 0 if out of range
+ */
+uint8_t WaterMeter_GetDiagnosticBPl(uint8_t index);
+
+/**
+ * @brief Get raw ADC span for the A-channel sweep point
+ * @param index Sweep point index
+ * @return LCA raw ADC span, or 0 if out of range
+ */
+uint16_t WaterMeter_GetDiagnosticRawSpan(uint8_t index);
+
+/**
+ * @brief Get raw ADC span for the B-channel sweep point
+ * @param index Sweep point index
+ * @return LCB raw ADC span, or 0 if out of range
+ */
+uint16_t WaterMeter_GetDiagnosticRawSpanB(uint8_t index);
+
+#endif /* WATER_METER_H */

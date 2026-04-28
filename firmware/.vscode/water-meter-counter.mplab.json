@@ -1,26 +1,6 @@
 {
-    "version": "1.8",
+    "version": "1.9",
     "importedFrom": "./",
-    "configurations": [
-        {
-            "name": "default",
-            "id": "",
-            "device": "PIC18F25K80",
-            "imageType": "application",
-            "imagePath": "./out/water-meter-counter/default.elf",
-            "toolProperties": "default-tool",
-            "tool": "PICkit 5",
-            "packs": [
-                {
-                    "name": "PIC18F-K_DFP",
-                    "vendor": "Microchip",
-                    "version": "1.15.303"
-                }
-            ],
-            "fileSet": "Project files",
-            "toolchain": "default-XC8"
-        }
-    ],
     "propertyGroups": [
         {
             "name": "default-XC8",
@@ -41,7 +21,6 @@
                     "\".\""
                 ],
                 "HI-TECH-LINK.fill-flash-options-how": "0",
-                "HI-TECH-LINK.fill-flash-options-seq": "",
                 "HI-TECH-COMP.disable-optimizations": true,
                 "HI-TECH-COMP.favor-optimization-for": "-speed,+space",
                 "HI-TECH-COMP.identifier-length": "255",
@@ -53,7 +32,6 @@
                 "HI-TECH-COMP.optimization-speed": false,
                 "HI-TECH-COMP.optimization-stable-enable": false,
                 "HI-TECH-COMP.use-iar": false,
-                "HI-TECH-LINK.additional-options-trace-type": "",
                 "HI-TECH-LINK.additional-options-use-response-files": false,
                 "HI-TECH-LINK.clear-bss": true,
                 "HI-TECH-LINK.create-html-files": false,
@@ -88,9 +66,7 @@
                 "debugoptions.useswbreakpoints": false,
                 "event.recorder.debugger.behavior": "Running",
                 "event.recorder.enabled": false,
-                "event.recorder.scvd.files": "",
                 "hwtoolclock.frcindebug": false,
-                "lastid": "",
                 "memories.aux": false,
                 "memories.bootflash": true,
                 "memories.configurationmemory": true,
@@ -104,15 +80,13 @@
                 "memories.programmemory": true,
                 "memories.programmemory.ranges": "0-7fff",
                 "poweroptions.powerenable": false,
-                "programmertogo.imagename": "",
                 "programoptions.donoteraseauxmem": false,
                 "programoptions.eraseb4program": true,
-                "programoptions.pgmspeed": "2",
+                "programoptions.pgmspeed": "Min",
                 "programoptions.preservedataflash": false,
                 "programoptions.preservedataflash.ranges": "${programoptions.preservedataflash.ranges}",
                 "programoptions.preserveeeprom": false,
                 "programoptions.preserveeeprom.ranges": "0-3ff",
-                "programoptions.preserveprogram.ranges": "",
                 "programoptions.preserveprogramrange": false,
                 "programoptions.preserveuserid": false,
                 "programoptions.programcalmem": false,
@@ -128,43 +102,165 @@
         {
             "name": "Project files",
             "files": [
-                "Makefile",
-                "mcc_generated_files/comparator/**/*",
-                "mcc_generated_files/peripheral/**/*",
-                "mcc_generated_files/system/**/*",
-                "mcc_generated_files/timer/**/*",
-                "mcc_generated_files/uart/**/*",
-                "*.h",
-                "*.c",
-                "*.mc3",
-                "mcc_generated_files/examples/UART_Example/*",
-                "mcc_generated_files/peripheral/cvref.h",
-                "mcc_generated_files/peripheral/src/cvref.c",
-                "mcc_generated_files/system/interrupt.h",
-                "mcc_generated_files/system/src/interrupt.c",
-                "mcc_generated_files/system/clock.h",
-                "mcc_generated_files/system/src/clock.c",
-                "mcc_generated_files/timer/tmr0.h",
-                "mcc_generated_files/timer/timer_interface.h",
-                "mcc_generated_files/timer/src/tmr0.c",
-                "mcc_generated_files/examples/UART_Example/uart_example.c",
-                "mcc_generated_files/system/system.h",
-                "mcc_generated_files/system/src/system.c",
-                "mcc_generated_files/system/src/config_bits.c",
-                "mcc_generated_files/system/config_bits.h",
-                "main.c",
-                "mcc_generated_files/system/pins.h",
-                "mcc_generated_files/system/src/pins.c",
-                "mcc_generated_files/uart/uart_types.h",
-                "mcc_generated_files/uart/eusart1.h",
-                "mcc_generated_files/uart/src/eusart1.c",
-                "mcc_generated_files/uart/uart_drv_interface.h",
-                "mcc_generated_files/comparator/cmp1.h",
-                "mcc_generated_files/comparator/src/cmp1.c",
-                "mcc_generated_files/comparator/src/cmp2.c",
-                "mcc_generated_files/comparator/cmp2.h"
+                {
+                    "include": "Makefile",
+                    "encoding": "ISO-8859-1"
+                },
+                {
+                    "include": "mcc_generated_files/comparator/**/*",
+                    "encoding": "ISO-8859-1"
+                },
+                {
+                    "include": "mcc_generated_files/peripheral/**/*",
+                    "encoding": "ISO-8859-1"
+                },
+                {
+                    "include": "mcc_generated_files/system/**/*",
+                    "encoding": "ISO-8859-1"
+                },
+                {
+                    "include": "mcc_generated_files/timer/**/*",
+                    "encoding": "ISO-8859-1"
+                },
+                {
+                    "include": "mcc_generated_files/uart/**/*",
+                    "encoding": "ISO-8859-1"
+                },
+                {
+                    "include": "*.h",
+                    "encoding": "ISO-8859-1"
+                },
+                {
+                    "include": "*.c",
+                    "encoding": "ISO-8859-1"
+                },
+                {
+                    "include": "*.mc3",
+                    "encoding": "ISO-8859-1"
+                },
+                {
+                    "include": "mcc_generated_files/examples/UART_Example/*",
+                    "encoding": "ISO-8859-1"
+                },
+                {
+                    "include": "mcc_generated_files/peripheral/cvref.h",
+                    "encoding": "ISO-8859-1"
+                },
+                {
+                    "include": "mcc_generated_files/peripheral/src/cvref.c",
+                    "encoding": "ISO-8859-1"
+                },
+                {
+                    "include": "mcc_generated_files/system/interrupt.h",
+                    "encoding": "ISO-8859-1"
+                },
+                {
+                    "include": "mcc_generated_files/system/src/interrupt.c",
+                    "encoding": "ISO-8859-1"
+                },
+                {
+                    "include": "mcc_generated_files/system/clock.h",
+                    "encoding": "ISO-8859-1"
+                },
+                {
+                    "include": "mcc_generated_files/system/src/clock.c",
+                    "encoding": "ISO-8859-1"
+                },
+                {
+                    "include": "mcc_generated_files/timer/tmr0.h",
+                    "encoding": "ISO-8859-1"
+                },
+                {
+                    "include": "mcc_generated_files/timer/timer_interface.h",
+                    "encoding": "ISO-8859-1"
+                },
+                {
+                    "include": "mcc_generated_files/timer/src/tmr0.c",
+                    "encoding": "ISO-8859-1"
+                },
+                {
+                    "include": "mcc_generated_files/examples/UART_Example/uart_example.c",
+                    "encoding": "ISO-8859-1"
+                },
+                {
+                    "include": "mcc_generated_files/system/system.h",
+                    "encoding": "ISO-8859-1"
+                },
+                {
+                    "include": "mcc_generated_files/system/src/system.c",
+                    "encoding": "ISO-8859-1"
+                },
+                {
+                    "include": "mcc_generated_files/system/src/config_bits.c",
+                    "encoding": "ISO-8859-1"
+                },
+                {
+                    "include": "mcc_generated_files/system/config_bits.h",
+                    "encoding": "ISO-8859-1"
+                },
+                {
+                    "include": "mcc_generated_files/system/pins.h",
+                    "encoding": "ISO-8859-1"
+                },
+                {
+                    "include": "mcc_generated_files/system/src/pins.c",
+                    "encoding": "ISO-8859-1"
+                },
+                {
+                    "include": "mcc_generated_files/uart/uart_types.h",
+                    "encoding": "ISO-8859-1"
+                },
+                {
+                    "include": "mcc_generated_files/uart/eusart1.h",
+                    "encoding": "ISO-8859-1"
+                },
+                {
+                    "include": "mcc_generated_files/uart/src/eusart1.c",
+                    "encoding": "ISO-8859-1"
+                },
+                {
+                    "include": "mcc_generated_files/uart/uart_drv_interface.h",
+                    "encoding": "ISO-8859-1"
+                },
+                {
+                    "include": "mcc_generated_files/comparator/cmp1.h",
+                    "encoding": "ISO-8859-1"
+                },
+                {
+                    "include": "mcc_generated_files/comparator/src/cmp1.c",
+                    "encoding": "ISO-8859-1"
+                },
+                {
+                    "include": "mcc_generated_files/comparator/src/cmp2.c",
+                    "encoding": "ISO-8859-1"
+                },
+                {
+                    "include": "mcc_generated_files/comparator/cmp2.h",
+                    "encoding": "ISO-8859-1"
+                },
+                "lctank/fet.lib"
+            ]
+        }
+    ],
+    "configurations": [
+        {
+            "name": "default",
+            "id": "",
+            "device": "PIC18F25K80",
+            "imageType": "application",
+            "imagePath": "./out/water-meter-counter/default.elf",
+            "toolProperties": "default-tool",
+            "tool": "PICkit 5",
+            "packs": [
+                {
+                    "name": "PIC18F-K_DFP",
+                    "vendor": "Microchip",
+                    "version": "1.15.303"
+                }
             ],
-            "encoding": "ISO-8859-1"
+            "fileSet": "Project files",
+            "toolchain": "default-XC8",
+            "includeLegacyMacros": true
         }
     ]
 }

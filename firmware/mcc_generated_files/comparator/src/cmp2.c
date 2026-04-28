@@ -10,7 +10,7 @@
  * @version CMP2 Driver Version 1.0.0
 */
  /*
-� [2025] Microchip Technology Inc. and its subsidiaries.
+� [2026] Microchip Technology Inc. and its subsidiaries.
 
     Subject to your compliance with these terms, you may use Microchip 
     software and any derivatives exclusively with Microchip products. 
@@ -52,22 +52,16 @@ void CMP2_Initialize(void)
       CMxCON0 register,or by switching the comparator on or off with the CxON
       bit of the CMxCON0 register.*/
     
-    // Disable interrupt as indicated by comment above
-    PIE4bits.CMP2IE = 0;
-    // Clear any pending interrupt flag
-    PIR4bits.CMP2IF = 0;
 
         // CNCH C2INB; CPCH CVREF; EVPOL Any Change; CPOL not inverted; COE COUT_internal; CON enabled; 
-    CM2CON = 0x98;  // Changed from 0x9C - disable COE (bit 2) to free RC0 for GPIO
+    CM2CON = 0x9C;
 
                         
     CMP2_InterruptCallbackRegister(CMP2_DefaultInterruptCallback);
 
     // Clearing IF flag before enabling the interrupt.
-    PIR4bits.CMP2IF = 0;
 
     // Enabling CMP2 interrupt.
-    PIE4bits.CMP2IE = 1;
 }
 
 void CMP2_Enable(void) 

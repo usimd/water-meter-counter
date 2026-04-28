@@ -10,7 +10,7 @@
  * @version CMP1 Driver Version 1.0.0
 */
  /*
-� [2025] Microchip Technology Inc. and its subsidiaries.
+� [2026] Microchip Technology Inc. and its subsidiaries.
 
     Subject to your compliance with these terms, you may use Microchip 
     software and any derivatives exclusively with Microchip products. 
@@ -52,22 +52,16 @@ void CMP1_Initialize(void)
       CMxCON0 register,or by switching the comparator on or off with the CxON
       bit of the CMxCON0 register.*/
     
-    // Disable interrupt as indicated by comment above
-    PIE4bits.CMP1IE = 0;
-    // Clear any pending interrupt flag
-    PIR4bits.CMP1IF = 0;
 
         // CNCH C1INB; CPCH CVREF; EVPOL Any Change; CPOL not inverted; COE COUT_internal; CON enabled; 
-    CM1CON = 0x9C;  // Keep this value - it's correct
+    CM1CON = 0x9C;
 
                         
     CMP1_InterruptCallbackRegister(CMP1_DefaultInterruptCallback);
 
     // Clearing IF flag before enabling the interrupt.
-    PIR4bits.CMP1IF = 0;
 
     // Enabling CMP1 interrupt.
-    PIE4bits.CMP1IE = 1;
 }
 
 void CMP1_Enable(void) 

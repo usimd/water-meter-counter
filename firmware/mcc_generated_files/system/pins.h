@@ -89,26 +89,26 @@
 #define IO_RB1_SetAnalogMode()      do { ANSELBbits.ANSEL8 = 1; } while(0)
 #define IO_RB1_SetDigitalMode()     do { ANSELBbits.ANSEL8 = 0; } while(0)
 
-// get/set RB2 aliases
-#define S0_TRIS                 TRISBbits.TRISB2
-#define S0_LAT                  LATBbits.LATB2
-#define S0_PORT                 PORTBbits.RB2
-#define S0_WPU                  WPUBbits.WPUB2
+// get/set RB4 aliases
+#define S0_TRIS                 TRISBbits.TRISB4
+#define S0_LAT                  LATBbits.LATB4
+#define S0_PORT                 PORTBbits.RB4
+#define S0_WPU                  WPUBbits.WPUB4
 #define S0_OD                   ODCONBbits.
-#define S0_ANS                  ANSELBbits.
-#define S0_SetHigh()            do { LATBbits.LATB2 = 1; } while(0)
-#define S0_SetLow()             do { LATBbits.LATB2 = 0; } while(0)
-#define S0_Toggle()             do { LATBbits.LATB2 = ~LATBbits.LATB2; } while(0)
-#define S0_GetValue()           PORTBbits.RB2
-#define S0_SetDigitalInput()    do { TRISBbits.TRISB2 = 1; } while(0)
-#define S0_SetDigitalOutput()   do { TRISBbits.TRISB2 = 0; } while(0)
-#define S0_SetPullup()          do { WPUBbits.WPUB2 = 1; } while(0)
-#define S0_ResetPullup()        do { WPUBbits.WPUB2 = 0; } while(0)
-// RB2 has no per-pin open-drain control (ODCON only for peripherals) and no analog function
-#define S0_SetPushPull()        do { } while(0)  // No ODCONB bit for RB2
-#define S0_SetOpenDrain()       do { } while(0)  // No ODCONB bit for RB2
-#define S0_SetAnalogMode()      do { } while(0)  // RB2 has no ANSEL bit
-#define S0_SetDigitalMode()     do { } while(0)  // RB2 has no ANSEL bit
+#define S0_ANS                  ANCON1bits.ANSEL9
+#define S0_SetHigh()            do { LATBbits.LATB4 = 1; } while(0)
+#define S0_SetLow()             do { LATBbits.LATB4 = 0; } while(0)
+#define S0_Toggle()             do { LATBbits.LATB4 = ~LATBbits.LATB4; } while(0)
+#define S0_GetValue()           PORTBbits.RB4
+#define S0_SetDigitalInput()    do { TRISBbits.TRISB4 = 1; } while(0)
+#define S0_SetDigitalOutput()   do { TRISBbits.TRISB4 = 0; } while(0)
+#define S0_SetPullup()          do { WPUBbits.WPUB4 = 1; } while(0)
+#define S0_ResetPullup()        do { WPUBbits.WPUB4 = 0; } while(0)
+// RB4 has no per-pin open-drain control; ANSEL9 uses 1=digital, 0=analog on this PIC
+#define S0_SetPushPull()        do { } while(0)  // No ODCONB bit for RB4
+#define S0_SetOpenDrain()       do { } while(0)  // No ODCONB bit for RB4
+#define S0_SetAnalogMode()      do { ANCON1bits.ANSEL9 = 0; } while(0)
+#define S0_SetDigitalMode()     do { ANCON1bits.ANSEL9 = 1; } while(0)
 
 // get/set RC0 aliases
 #define LCB_TRIS                 TRISCbits.TRISC0

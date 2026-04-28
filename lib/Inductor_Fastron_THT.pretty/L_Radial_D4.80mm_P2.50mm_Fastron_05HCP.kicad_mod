@@ -124,7 +124,7 @@
 		(uuid "fee0b0d6-a1c5-44c3-833e-3a74c534ca5a")
 	)
 	(embedded_fonts no)
-	(model "${KICAD9_3DMODEL_DIR}/Inductor_THT.3dshapes/L_Radial_D7.5mm_P5.00mm_Fastron_07P.step"
+	(model "${KIPRJMOD}/lib/Inductor_Fastron_THT.pretty/Fastron_05HCP.step"
 		(offset
 			(xyz 0 0 0)
 		)

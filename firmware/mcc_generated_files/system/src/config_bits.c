@@ -54,12 +54,12 @@
 #pragma config BORPWR = ZPBORMV    // BORMV Power level->ZPBORMV instead of BORMV is selected
 
 //CONFIG2H
-#pragma config WDTEN = NOSLP    // Watchdog Timer Enable bits->WDT enabled only while device is active and disabled in Sleep mode; SWDTEN bit disabled
+#pragma config WDTEN = OFF    // Watchdog Timer Enable bits->WDT Disabled (control is placed on SWDTEN bit)
 #pragma config WDTPS = 1048576    // Watchdog Timer Postscale Select bits->1:1048576
 
 //CONFIG3H
-#pragma config MCLRE = ON    // MCLR Pin Enable bit->MCLR Enabled, RE3 Disabled
-#pragma config CANMX = PORTB    // ECAN Mux bit->PORTB
+#pragma config MCLRE = ON    // MCLR Pin Enable bit->MCLR Enabled, RE3 input disabled
+#pragma config CANMX = PORTC    // ECAN Mux bit->PORTC (keeps RB2/RB3/RB4 available as GPIO)
 #pragma config MSSPMSK = MSK7    // MSSP address masking->7 Bit address masking mode
 
 //CONFIG4L

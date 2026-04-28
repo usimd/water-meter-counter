@@ -1,5 +1,5 @@
 /*
-ï¿½ [2025] Microchip Technology Inc. and its subsidiaries.
+© [2026] Microchip Technology Inc. and its subsidiaries.
 
     Subject to your compliance with these terms, you may use Microchip 
     software and any derivatives exclusively with Microchip products. 
@@ -24,7 +24,6 @@
 
 // Set the CVREF module to the options selected in the user interface.
 void CVREF_Initialize(void) {
-    // CVREN enabled; CVROE disabled; CVRSS (Vdd)-(Vss),CVoffset=Vss; CVR 15 (generates ~2.5V);
-    // Formula: Vref = (CVR + 1) * 5V / 32 = (15+1)*5/32 = 2.5V
-    CVRCON = 0x9F;  // 0x9F = 0b10011111: CVREN=1, CVROE=0, CVRSS=0, CVR=15
+    // CVREN enabled; CVROE disabled; CVRSS (Vdd)-(Vss),CVoffset=Vss; CVR 16; 
+    CVRCON = 0x90;
 }

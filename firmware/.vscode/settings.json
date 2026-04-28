@@ -1,7 +1,4 @@
 {
-    "mplab.clangd.arguments": [
-        "--compile-commands-dir=${workspaceFolder}/_build/water-meter-counter/default"
-    ],
     "mplab.clangd.path": "/opt/microchip/xc8/v3.10/bin/xc8-clangd",
     "C_Cpp.intelliSenseEngine": "disabled",
     "makefile.configureOnOpen": false,
@@ -12,5 +9,6 @@
         "mplab-core-da"
     ],
     "cmake.sourceDirectory": "${workspaceFolder}/cmake/water-meter-counter/default",
-    "mplab.project.workspace.addNewSourceFiles": "Always"
+    "mplab.project.workspace.addNewSourceFiles": "Always",
+    "mplab.clangd.compileCommandsDir": "${workspaceFolder}/_build/water-meter-counter/default"
 }
