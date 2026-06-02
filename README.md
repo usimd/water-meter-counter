@@ -1,5 +1,4 @@
 ![GitHub License](https://img.shields.io/github/license/usimd/water-meter-counter)
-
 [![Upload to  - AISLER](https://img.shields.io/badge/Upload_to_-AISLER-ff8000)](https://aisler.net/p/new?url=https://raw.githubusercontent.com/usimd/water-meter-counter/refs/heads/main/water-meter-counter.kicad_pcb&ref=github)
 
 # Inductive water meter counter with S0 interface for GSB-8 meters
@@ -17,5 +16,10 @@ based on a Microchip PIC controller, it requires the respective infrastructure t
 Bundled assets are available as GitHub releases, including compiled firmware, 3MF file of the
 housing and Gerber files for PCB production.
 
+## AISLER discount
+
 This project has been prototyped at [AISLER](https://aisler.net/p/BFTGUQNT). You can instantly
 order as well by clicking on the badge at the top.
+
+In case you want to build this (or any other project) at AISLER, here's a 10€ discount code:
+`MakeInEurope-ZDCTN`
