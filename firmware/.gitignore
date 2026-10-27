@@ -4,5 +4,10 @@ dist/
 nbproject
 out/
 debug/
-cmake/**/.generated/
 .vscode/*-local.json
+cmake/**/.generated/cmake-hash.json
+
+# Local bench tooling and captures
+scripts/
+logs/
+.vscode/tasks.json

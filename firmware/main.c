@@ -1,160 +1,113 @@
- /*
- * MAIN Generated Driver File
- * 
- * @file main.c
- * 
- * @defgroup main MAIN
- * 
- * @brief This is the generated driver implementation file for the MAIN driver.
- *
- * @version MAIN Driver Version 1.0.2
- *
- * @version Package Version: 3.1.2
-*/
+// SPDX-FileCopyrightText: 2025-2026 usimd
+// SPDX-License-Identifier: Apache-2.0
 
-/*
-? [2025] Microc� [2025] Microchip Technology Inc. and its subsidiaries.
+/**
+ * Water meter counter firmware (PIC18F25K80, rev2 board).
+ *
+ * Counts rotations of the water meter's half-disc with two LC-tank sensors,
+ * emits an S0 pulse on RB4 per forward rotation and logs to UART1
+ * (RC6/RC7, 9600 8N1).
+ */
 
-    Subject to your compliance with these terms, you may use Microchip 
-    software and any derivatives exclusively with Microchip products. 
-    You are responsible for complying with 3rd party license terms  
-    applicable to your use of 3rd party software (including open source  
-    software) that may accompany Microchip software. SOFTWARE IS ?AS IS.? 
-    NO WARRANTIES, WHETHER EXPRESS, IMPLIED OR STATUTORY, APPLY TO THIS 
-    SOFTWARE, INCLUDING ANY IMPLIED WARRANTIES OF NON-INFRINGEMENT,  
-    MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE. IN NO EVENT 
-    WILL MICROCHIP BE LIABLE FOR ANY INDIRECT, SPECIAL, PUNITIVE, 
-    INCIDENTAL OR CONSEQUENTIAL LOSS, DAMAGE, COST OR EXPENSE OF ANY 
-    KIND WHATSOEVER RELATED TO THE SOFTWARE, HOWEVER CAUSED, EVEN IF 
-    MICROCHIP HAS BEEN ADVISED OF THE POSSIBILITY OR THE DAMAGES ARE 
-    FORESEEABLE. TO THE FULLEST EXTENT ALLOWED BY LAW, MICROCHIP?S 
-    TOTAL LIABILITY ON ALL CLAIMS RELATED TO THE SOFTWARE WILL NOT 
-    EXCEED AMOUNT OF FEES, IF ANY, YOU PAID DIRECTLY TO MICROCHIP FOR 
-    THIS SOFTWARE.
-*/
+#include <stdio.h>
 #include "mcc_generated_files/system/system.h"
 #include "water_meter.h"
-#include <xc.h>
 
-/*
-    Main application
-    
-    Water Meter Counter using dual LC tank circuits (CMP1, CMP2)
-    with S0 pulse output interface and deep sleep mode.
-    
-    Pin Assignment:
-    - RC5: LC Tank A drive (pulse to excite LC tank)
-    - RC0: LC Tank B drive (pulse to excite LC tank)
-    - RA5: LC Tank A sense (CMP1 comparator input)
-    - RB1: LC Tank B sense (CMP2 comparator input)
-    - RB2: S0 output (pulse interface, ~100ms pulses)
-    
-    S0 Resolution:
-    - 0.5 liters per pulse (2 pulses per full rotation)
-    - Half-metal disc with 120 deg inductor offset = 2 transitions per rotation
-    
-    Power Management:
-    - Enters deep sleep mode to minimize power consumption
-    - Wakes up every 1.5-2 seconds to check for water meter rotations
-    - Q_3 = 2.5 m³/h: Minimum half-rotation time = 720ms (0.5L per 720ms)
-    - Safe timeout: 500ms minimum to ensure no transitions are missed
-*/
+/* The rotation decoder was tuned at 70..100 ms per sample; one measurement
+ * takes ~1.5 ms. Between samples the CPU sleeps until the watchdog wakes it
+ * (4 ms x WDTPS 1:16 = 64 ms, config_bits.c). While an S0 pulse runs it
+ * busy-waits instead, so TMR0 (stopped in Sleep) can end the pulse on time.
+ * Both channels are timed in hardware by the comparator, so restarting the
+ * HF-INTOSC after Sleep does not affect the readings. */
+#define SAMPLE_DELAY_MS  66
+
+/* 1 = print "S <A ticks> <B ticks> <boot A> <baseline B> <P|->" every
+ * sample, e.g. to record captures for re-tuning the rotation decoder.
+ * Set by the build: default.hex is built with 0, default-debug.hex with 1
+ * (cmake/water-meter-counter/default/user.cmake). */
+#ifndef DEBUG_STREAM
+#define DEBUG_STREAM  0
+#endif
+
+/* 0 = busy-wait between samples (CPU awake), 1 = sleep until the watchdog. */
+#define LOW_POWER_WAIT  1
+
+static void WaitForNextSample(void)
+{
+#if LOW_POWER_WAIT
+    uint8_t saved_pie1;
+    uint8_t saved_tmr0ie;
+
+    if (WaterMeter_IsS0PulseActive()) {
+        __delay_ms(SAMPLE_DELAY_MS);
+        return;
+    }
+
+    /* Only the watchdog may end the sleep: let the UART TX drain and mask
+     * the other interrupts that would wake the CPU early. */
+    while (PIE1bits.TX1IE || !EUSART1_IsTxDone()) {
+    }
+    saved_pie1 = PIE1;
+    saved_tmr0ie = INTCONbits.TMR0IE;
+    PIE1bits.RC1IE = 0;
+    INTCONbits.TMR0IE = 0;
+
+    /* Needs WDTEN = ON (SWDTEN control) and WDTPS 1:16 in config_bits.c. */
+    WDTCONbits.SWDTEN = 1;
+    SLEEP();
+    NOP();
+    WDTCONbits.SWDTEN = 0;
+
+    PIE1 = saved_pie1;
+    INTCONbits.TMR0IE = saved_tmr0ie;
+#else
+    __delay_ms(SAMPLE_DELAY_MS);
+#endif
+}
 
 int main(void)
 {
     SYSTEM_Initialize();
-    INTERRUPT_GlobalInterruptHighEnable(); 
-    INTERRUPT_GlobalInterruptLowEnable(); 
-    INTERRUPT_PeripheralInterruptEnable(); 
+    INTERRUPT_GlobalInterruptHighEnable();
+    INTERRUPT_GlobalInterruptLowEnable();
+    INTERRUPT_PeripheralInterruptEnable();
 
-    // CRITICAL: Disable secondary oscillator to free RC0/RC1 for GPIO use
-    // Datasheet DS30009977G: "When the oscillator is enabled, the RC1/SOSCI and
-    // RC0/SOSCO/SCLKI pins become inputs. This means the values of TRISC<1:0> 
-    // are ignored and the pins are read as '0'."
-    // SOSCSEL=DIG in config bits is NOT enough - must also clear these at runtime:
-    OSCCON2bits.SOSCGO = 0;  // Disable secondary oscillator start control
-    T1CONbits.T1OSCEN = 0;   // Disable Timer1 oscillator enable
-    T3CONbits.SOSCEN = 0;    // Disable Timer3 secondary oscillator enable
-    
-    // CRITICAL: Force RC5 and RC0 to be DIGITAL OUTPUTS
-    // MCC configures them as inputs and regenerates on build
-    // Must be IMMEDIATELY after SYSTEM_Initialize() before anything else uses these pins
-    TRISCbits.TRISC5 = 0;  // RC5 (LCA) = output
-    TRISCbits.TRISC0 = 0;  // RC0 (LCB) = output
-    
-    // CRITICAL: Ensure RA5 and RB1 (comparator inputs) are in ANALOG mode
-    // Comparators REQUIRE analog inputs to work properly!
-    // Digital mode uses Schmitt trigger which clips small AC signals
-    // ANSELA is at 0xF1C (bit 4 for RA5), ANSELB is at 0xF1D (bit 1 for RB1)
-    *(volatile unsigned char*)0xF1C |= 0x10;   // Set bit 4 (RA5) - set to ANALOG mode
-    *(volatile unsigned char*)0xF1D |= 0x02;   // Set bit 1 (RB1) - set to ANALOG mode 
+    /* SLEEP() enters Sleep (IDLEN = 0, the reset default). The regulator
+     * goes to low-power mode in Sleep; ULP regulator mode stays off
+     * (RETEN = OFF, config_bits.c). */
+    WDTCONbits.REGSLP = 1;
 
-    // Initialize water meter counter module
-    WaterMeter_Initialize();
-    
-    // CRITICAL FIX: MCC has a bug where register values aren't set properly
-    // Must be AFTER WaterMeter_Initialize() because it calls CMP1/2_Initialize()
-    // which would overwrite our register settings
-    // CVref: 0xBA = CVREN=1, CVROE=1, CVRSS=0, CVR=10 (generates ~1.72V on RA2)
-    // Formula: Vref = (CVR+1)*5/32 = (10+1)*5/32 = 1.72V
-    // CVROE=1 enables the output on RA2 so comparators can use it as threshold
-    CVRCON = 0xBA;
-    
-    // Comparators: 0x9C = CNCH=1(C1INB), CPCH=1(CVREF), EVPOL=0, CPOL=0, COE=1, CON=1
-    CM1CON = 0x9C;  // Compare C1INB input against CVref
-    CM2CON = 0x98;  // Changed from 0x9C - COE=0 to free RC0 for GPIO (was blocking LCB drive)
-    
-    // Enable sleep mode with safe timeout for Q_3 = 2.5 m³/h
-    // 0.5 liter per 720ms minimum at max flow, use 500ms safe timeout
-    WaterMeter_SetSleepEnabled(true);
-    
-    // Wait for UART to settle
-    __delay_ms(100);
-    printf("\r\n=== Water Meter Counter Started ===\r\n");
-    printf("Q_3: 2.5 m³/h | S0: RB2 | Resolution: 0.5L/pulse\r\n");
-    printf("\r\nRunning hardware diagnostic test...\r\n");
-    
-    // Run diagnostic test to verify LC tank hardware is working
-    WaterMeter_DiagnosticTest();
+    printf("\r\nWater meter counter\r\n");
+    WaterMeter_Initialize(WaitForNextSample);
 
-    while(1)
     {
-        // Process water meter counter state machine
-        // This monitors the LC tank circuits and generates S0 pulses
-        if (WaterMeter_Process()) {
-            // A half rotation was detected (0.5L of water)
-            // S0 pulse is automatically generated by the module
-            printf("\r\nRotation detected. Count: %lu\r\n", WaterMeter_GetRotationCount());
-            // Wait for UART transmission to complete before sleeping
-            while (!EUSART1_IsTxDone()) {
-                __delay_us(10);
-            }
+        water_meter_status_t status;
+
+        WaterMeter_GetStatus(&status);
+        printf("Baseline A=%u B=%u\r\n", status.baseline_a, status.baseline_b);
+    }
+
+    while (1) {
+        int8_t direction = WaterMeter_Process();
+
+        if (direction != 0) {
+            printf("%s fwd=%lu rev=%lu\r\n",
+                   (direction > 0) ? "FWD" : "REV",
+                   WaterMeter_GetForwardCount(),
+                   WaterMeter_GetReverseCount());
         }
-        
-        // Debug output for LC tank oscillation measurements
-        printf("LCA: %3d (metal:%d, thr:%d)  LCB: %3d (metal:%d, thr:%d)  |  CMP1=%d CMP2=%d\r\n", 
-               WaterMeter_GetLCA_OscillationCount(),
-               WaterMeter_GetLCA_State(),
-               18,  /* Calibrated threshold */
-               WaterMeter_GetLCB_OscillationCount(),
-               WaterMeter_GetLCB_State(),
-               18,  /* Calibrated threshold */
-               WaterMeter_GetCMP1_Output(),
-               WaterMeter_GetCMP2_Output());
-        // Wait for UART transmission to complete before sleeping
-        while (!EUSART1_IsTxDone()) {
-            __delay_us(10);
+
+#if DEBUG_STREAM
+        {
+            water_meter_status_t status;
+
+            WaterMeter_GetStatus(&status);
+            printf("S %u %u %u %u %c\r\n",
+                   status.ringdown_a, status.ringdown_b, status.baseline_a, status.baseline_b,
+                   status.in_pass_b ? 'P' : '-');
         }
-        
-        // Add delay between measurements to prevent continuous polling
-        // This gives time for LC tank to fully stabilize and reduces power consumption
-        __delay_ms(500);  // 500ms delay between measurements
-        
-        // Enter deep sleep mode if system is idle
-        // Device will wake up every 3 seconds to check for rotations
-        // Timeout accounts for: disc geometry (7.5mm radius, 120° offset inductors, half metal)
-        if (WaterMeter_CanSleep()) {
-            WaterMeter_EnterDeepSleep(3000);  /* 3 second timeout for safety with geometry */
-        }
-    }    
+#endif
+
+        WaitForNextSample();
+    }
 }

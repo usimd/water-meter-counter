@@ -2,15 +2,15 @@
 
 manifest_file_version: 1.0.0
 project: water-meter-counter
-creation_date: 2026-01-21T22:12:12.359+01:00[Europe/Berlin]
+creation_date: 2026-05-09T00:48:02.945+02:00[Europe/Berlin]
 operating_system: Linux
 mcc_mode: VSCodePlugin
 mcc_mode_version: Unknown
 device_name: PIC18F25K80
 compiler: N/A
-mcc_version: 5.6.3
-mcc_core_version: 5.8.3
-content_manager_version: 6.0.3
+mcc_version: 5.6.4
+mcc_core_version: 5.8.4
+content_manager_version: 6.0.4
 is_mcc_offline: false
 is_using_prerelease_versions: false
 mcc_content_registries: https://registry.npmjs.org/

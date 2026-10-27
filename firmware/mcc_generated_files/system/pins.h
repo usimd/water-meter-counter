@@ -104,11 +104,11 @@
 #define S0_SetDigitalOutput()   do { TRISBbits.TRISB4 = 0; } while(0)
 #define S0_SetPullup()          do { WPUBbits.WPUB4 = 1; } while(0)
 #define S0_ResetPullup()        do { WPUBbits.WPUB4 = 0; } while(0)
-// RB4 has no per-pin open-drain control; ANSEL9 uses 1=digital, 0=analog on this PIC
+// RB4 has no per-pin open-drain control; ANSEL9 uses 1=analog, 0=digital
 #define S0_SetPushPull()        do { } while(0)  // No ODCONB bit for RB4
 #define S0_SetOpenDrain()       do { } while(0)  // No ODCONB bit for RB4
-#define S0_SetAnalogMode()      do { ANCON1bits.ANSEL9 = 0; } while(0)
-#define S0_SetDigitalMode()     do { ANCON1bits.ANSEL9 = 1; } while(0)
+#define S0_SetAnalogMode()      do { ANCON1bits.ANSEL9 = 1; } while(0)
+#define S0_SetDigitalMode()     do { ANCON1bits.ANSEL9 = 0; } while(0)
 
 // get/set RC0 aliases
 #define LCB_TRIS                 TRISCbits.TRISC0

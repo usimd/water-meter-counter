@@ -1,47 +1,162 @@
+# SPDX-FileCopyrightText: 2025-2026 usimd
+# SPDX-License-Identifier: Apache-2.0
+
 name: Test and build
 on:
   push:
   pull_request:
 
+permissions:
+  contents: read
+
 env:
   XC8_VERSION: "3.10"
-  PROFILE: "default"
-  PACK_FOLDER: "/opt/microchip/packs"
+  KICAD_PROJECT: water-meter-counter
 
 jobs:
+  reuse:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: fsfe/reuse-action@v6
+
   build-firmware:
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: firmware
+    env:
+      PACK_FOLDER: /opt/microchip/packs
     steps:
       - uses: actions/checkout@v6
 
       - uses: usimd/setup-xc-action@v1
+        id: xc8
         with:
           compiler: xc8
-          version: ${{env.XC8_VERSION}}  
+          version: ${{ env.XC8_VERSION }}
 
-      - name: Run build
-        working-directory: firmware
+      - name: Download device packs
         run: |
-          # Download profile packs to folder
-          sudo mkdir -p /${{ env.PACK_FOLDER }}
-          sudo chown $USER /${{ env.PACK_FOLDER }}
-          jq -r '.configurations[] | select(.name=="${{ env.PROFILE }}") | .packs[] | ("https://packs.download.microchip.com/" + .vendor + "." + .name + "." + .version + ".atpack" + "\n" + .vendor + "/" + .name + "/" + .version)' .vscode/water-meter-counter.mplab.json | xargs -n2 sh -c 'curl --create-dirs -LO --output-dir /${{ env.PACK_FOLDER }}/$1 $0 && unzip -qq /${{ env.PACK_FOLDER }}/$1/* -d /${{ env.PACK_FOLDER }}/$1'
-          
-          cmake -G Ninja -S cmake/water-meter-counter/${{ env.PROFILE }} -B _build/water-meter-counter/default --fresh -DPACK_REPO_PATH=${{ env.PACK_FOLDER }}
-          cmake --build _build/water-meter-counter/default -v --parallel
+          sudo mkdir -p "$PACK_FOLDER"
+          sudo chown "$USER" "$PACK_FOLDER"
+          jq -r '.configurations[] | select(.name=="default") | .packs[] | ("https://packs.download.microchip.com/" + .vendor + "." + .name + "." + .version + ".atpack" + "\n" + .vendor + "/" + .name + "/" + .version)' .vscode/water-meter-counter.mplab.json \
+            | xargs -n2 sh -c 'curl --fail --create-dirs -sSLO --output-dir "$PACK_FOLDER/$1" "$0" && unzip -qq "$PACK_FOLDER/$1"/*.atpack -d "$PACK_FOLDER/$1"'
 
-  kicad-test:
+      # The MPLAB-generated preset supplies the XC8 toolchain file and rule
+      # overrides; user.cmake adds the debug image next to the production one.
+      - name: Build production and debug images
+        run: |
+          cmake -S cmake/water-meter-counter/default --preset water_meter_counter_default_conf --fresh \
+            -DPACK_REPO_PATH="$PACK_FOLDER" \
+            -DCMAKE_C_COMPILER="${{ steps.xc8.outputs.compiler-path }}/xc8-cc" \
+            -DCMAKE_ASM_COMPILER="${{ steps.xc8.outputs.compiler-path }}/xc8-cc"
+          cmake --build _build/water-meter-counter/default --parallel
+
+      - name: Collect images
+        run: |
+          mkdir -p dist
+          for ext in hex elf; do
+            cp "out/water-meter-counter/default.$ext" "dist/water-meter-counter-production.$ext"
+            cp "out/water-meter-counter/default-debug.$ext" "dist/water-meter-counter-debug.$ext"
+          done
+          ls -l dist
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: firmware
+          path: firmware/dist/
+          if-no-files-found: error
+
+  hardware:
     runs-on: ubuntu-latest
+    # The design files are KiCad 10 format; -full ships the stock symbol and
+    # footprint libraries the library checks in ERC/DRC compare against.
+    container:
+      image: kicad/kicad:10.0-full
+      options: --user root
     steps:
       - uses: actions/checkout@v6
 
-      - uses: sparkengineering/kicad-action@v4
-        with:
-          kicad_sch: water-meter-counter.kicad_sch
-          sch_pdf: true
-          sch_bom: true
-          sch_erc: true
-          pcb_drc: true
-          kicad_pcb: water-meter-counter.kicad_pcb
-          pcb_gerbers: true  
+      # Actions sets HOME=/github/home, which lacks the image's global library
+      # tables; without them ERC/DRC flag every stock symbol and footprint.
+      - name: Install global library tables
+        run: |
+          mkdir -p "$HOME/.config/kicad/10.0"
+          cp /usr/share/kicad/template/sym-lib-table /usr/share/kicad/template/fp-lib-table "$HOME/.config/kicad/10.0/"
 
+      # Report only: the fabricated rev2 board has known, accepted DRC errors.
+      - name: ERC and DRC
+        run: |
+          mkdir -p dist
+          kicad-cli sch erc --severity-all -o dist/erc.rpt "$KICAD_PROJECT.kicad_sch" | tee erc.log
+          kicad-cli pcb drc --severity-all --schematic-parity -o dist/drc.rpt "$KICAD_PROJECT.kicad_pcb" | tee drc.log
+          {
+            echo "### ERC / DRC (report only)"
+            echo '```'
+            grep -h "Found" erc.log drc.log
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Export manufacturing files
+        run: |
+          kicad-cli sch export pdf -o "dist/$KICAD_PROJECT-schematic.pdf" "$KICAD_PROJECT.kicad_sch"
+          kicad-cli sch export bom \
+            --fields 'Reference,Value,Footprint,${QUANTITY},${DNP}' \
+            --labels 'Refs,Value,Footprint,Qty,DNP' \
+            --group-by 'Value,Footprint' --ref-range-delimiter '' \
+            -o "dist/$KICAD_PROJECT-bom.csv" "$KICAD_PROJECT.kicad_sch"
+          kicad-cli pcb export pos --format csv --units mm --side both --exclude-dnp \
+            -o "dist/$KICAD_PROJECT-pos.csv" "$KICAD_PROJECT.kicad_pcb"
+          mkdir -p gerbers
+          kicad-cli pcb export gerbers --subtract-soldermask \
+            --layers F.Cu,B.Cu,F.Paste,B.Paste,F.Silkscreen,B.Silkscreen,F.Mask,B.Mask,Edge.Cuts \
+            -o gerbers/ "$KICAD_PROJECT.kicad_pcb"
+          kicad-cli pcb export drill --format excellon --excellon-separate-th \
+            --generate-map --map-format gerberx2 -o gerbers/ "$KICAD_PROJECT.kicad_pcb"
+          python3 -m zipfile -c "dist/$KICAD_PROJECT-gerbers.zip" gerbers/*
+          ls -l dist
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: hardware
+          path: dist/
+          if-no-files-found: error
+
+  release:
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: [reuse, build-firmware, hardware]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
+      - name: Assemble release assets
+        env:
+          TAG: ${{ github.ref_name }}
+        run: |
+          mkdir release
+          for f in artifacts/firmware/* artifacts/hardware/*; do
+            name=$(basename "$f")
+            case "$name" in erc.rpt|drc.rpt) continue ;; esac
+            cp "$f" "release/${name/water-meter-counter/water-meter-counter-$TAG}"
+          done
+          cp Watermeter_Cover.3mf Watermeter_Cover.FCStd release/
+          for f in LICENSES/*.txt; do
+            cp "$f" "release/LICENSE-$(basename "$f")"
+          done
+          ls -l release
+
+      - name: Create GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.ref_name }}
+        run: |
+          prerelease=""
+          [[ "$TAG" == *-* ]] && prerelease="--prerelease"
+          gh release create "$TAG" release/* --verify-tag --generate-notes --title "$TAG" $prerelease

@@ -36,7 +36,7 @@
 // Configuration bits: selected in the GUI
 
 //CONFIG1L
-#pragma config RETEN = ON    // VREG Sleep Enable bit->Ultra low-power regulator is Enabled (Controlled by SRETEN bit)
+#pragma config RETEN = OFF    // VREG Sleep Enable bit->Ultra low-power regulator is Disabled (errata DS80000519 1.5.1: ULP sleep can lock out ICSP; REGSLP is used instead, see main.c)
 #pragma config INTOSCSEL = HIGH    // LF-INTOSC Low-power Enable bit->LF-INTOSC in High-power mode during Sleep
 #pragma config SOSCSEL = DIG    // SOSC Power Selection and mode Configuration bits->Digital (SCLKI) mode
 #pragma config XINST = OFF    // Extended Instruction Set->Disabled (XC8 free doesn't support this)
@@ -54,8 +54,8 @@
 #pragma config BORPWR = ZPBORMV    // BORMV Power level->ZPBORMV instead of BORMV is selected
 
 //CONFIG2H
-#pragma config WDTEN = OFF    // Watchdog Timer Enable bits->WDT Disabled (control is placed on SWDTEN bit)
-#pragma config WDTPS = 1048576    // Watchdog Timer Postscale Select bits->1:1048576
+#pragma config WDTEN = ON    // Watchdog Timer Enable bits->WDT controlled by SWDTEN bit (wakes the PIC from sleep, see main.c)
+#pragma config WDTPS = 16    // Watchdog Timer Postscale Select bits->1:16 (4 ms x 16 = 64 ms sleep between samples, see main.c)
 
 //CONFIG3H
 #pragma config MCLRE = ON    // MCLR Pin Enable bit->MCLR Enabled, RE3 input disabled

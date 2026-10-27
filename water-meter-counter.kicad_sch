@@ -619,7 +619,7 @@
 				)
 			)
 			(property "Description" "Unpolarized capacitor, small symbol"
-				(at 0 0 0)
+				(at 0 -10.16 0)
 				(show_name no)
 				(do_not_autoplace no)
 				(hide yes)
@@ -669,7 +669,7 @@
 						(xy -1.524 -0.508) (xy 1.524 -0.508)
 					)
 					(stroke
-						(width 0.3302)
+						(width 0.3048)
 						(type default)
 					)
 					(fill
@@ -3133,6 +3133,17 @@
 		)
 		(uuid "91d28db6-fa71-4762-a18c-0dca3d552e90")
 	)
+	(text "C1 DNP: No capacitance on MCLR/VPP during ICSP\n(datasheet + PICkit 5 troubleshooting).\nPopulate if programming fails."
+		(exclude_from_sim no)
+		(at 92.202 25.654 0)
+		(effects
+			(font
+				(size 1.016 1.016)
+			)
+			(justify left top)
+		)
+		(uuid "9de655a8-189c-448e-8771-8cc6e2adcda3")
+	)
 	(text "Power and S0 connector"
 		(exclude_from_sim no)
 		(at 29.972 16.256 0)
@@ -4318,6 +4329,28 @@
 				)
 			)
 		)
+		(property "Manufacturer" "YAGEO"
+			(at 69.85 106.68 90)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "MPN" "RC0603FR-07470RL"
+			(at 69.85 106.68 90)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
 		(pin "1"
 			(uuid "59a625fd-bc18-425c-8e58-0157763218b4")
 		)
@@ -4388,6 +4421,28 @@
 			)
 		)
 		(property "Description" "32K Flash, 3.5K RAM, 1K EEPROM PIC18 Microcontroller ADC PWM CAN SPI I2C USART in QFN28 package"
+			(at 152.4 50.8 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Manufacturer" "Microchip"
+			(at 152.4 50.8 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "MPN" "PIC18F25K80-I/MM"
 			(at 152.4 50.8 0)
 			(hide yes)
 			(show_name no)
@@ -4559,8 +4614,19 @@
 				)
 			)
 		)
-		(property "MPN" "SD103AW"
+		(property "MPN" "SS14MH"
 			(at 27.94 120.65 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Manufacturer" "Taiwan Semiconductor"
+			(at 27.94 120.65 180)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -4729,6 +4795,28 @@
 				)
 			)
 		)
+		(property "Manufacturer" "JST"
+			(at 21.59 29.21 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "MPN" "S4B-XH-A(LF)(SN)"
+			(at 21.59 29.21 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
 		(pin "1"
 			(uuid "9e1fa485-b6e9-4a48-a105-335e0fc370f8")
 		)
@@ -4806,6 +4894,28 @@
 			)
 		)
 		(property "Description" "Resistor, small symbol"
+			(at 43.18 109.22 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Manufacturer" "YAGEO"
+			(at 43.18 109.22 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "MPN" "RC0603FR-07330KL"
 			(at 43.18 109.22 0)
 			(hide yes)
 			(show_name no)
@@ -4897,6 +5007,17 @@
 			)
 		)
 		(property "MPN" "05HCP-471K-51"
+			(at 67.31 116.84 90)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Manufacturer" "Fastron"
 			(at 67.31 116.84 90)
 			(hide yes)
 			(show_name no)
@@ -5139,6 +5260,28 @@
 				)
 			)
 		)
+		(property "Manufacturer" "YAGEO"
+			(at 39.37 106.68 90)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "MPN" "RC0603FR-07470RL"
+			(at 39.37 106.68 90)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
 		(pin "1"
 			(uuid "f4345165-4016-4f21-990b-d0632d796e82")
 		)
@@ -5220,6 +5363,28 @@
 				)
 			)
 		)
+		(property "Manufacturer" "YAGEO"
+			(at 73.66 104.14 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "MPN" "RC0603FR-07330KL"
+			(at 73.66 104.14 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
 		(pin "1"
 			(uuid "6c744c60-e7e9-44ac-a15b-3f86baf31599")
 		)
@@ -5291,6 +5456,28 @@
 		)
 		(property "Description" "Resistor, small symbol"
 			(at 116.84 45.72 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Manufacturer" "YAGEO"
+			(at 116.84 45.72 90)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "MPN" "RC0603FR-07470RL"
+			(at 116.84 45.72 90)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -5611,6 +5798,28 @@
 				)
 			)
 		)
+		(property "Manufacturer" "KYOCERA AVX"
+			(at 111.76 60.96 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "MPN" "06035C104JAT2A"
+			(at 111.76 60.96 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
 		(pin "1"
 			(uuid "82ac71f3-3e9b-4a42-b834-339492e6a2c8")
 		)
@@ -5682,6 +5891,28 @@
 		)
 		(property "Description" "Unpolarized capacitor, small symbol"
 			(at 64.77 106.68 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Manufacturer" "KEMET"
+			(at 64.77 106.68 90)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "MPN" "C0603C101J5GACTU"
+			(at 64.77 106.68 90)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -5849,8 +6080,19 @@
 				)
 			)
 		)
-		(property "MPN" "SD103AW"
+		(property "MPN" "SS14MH"
 			(at 58.42 120.65 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Manufacturer" "Taiwan Semiconductor"
+			(at 58.42 120.65 180)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -5931,6 +6173,28 @@
 		)
 		(property "Description" "Resistor, small symbol"
 			(at 22.86 120.65 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Manufacturer" "YAGEO"
+			(at 22.86 120.65 90)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "MPN" "RC0603FR-07470RL"
+			(at 22.86 120.65 90)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -6021,6 +6285,28 @@
 				)
 			)
 		)
+		(property "Manufacturer" "YAGEO"
+			(at 73.66 109.22 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "MPN" "RC0603FR-07330KL"
+			(at 73.66 109.22 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
 		(pin "1"
 			(uuid "95b43cce-81ac-4b74-ac9e-e4c36f378c8c")
 		)
@@ -6092,6 +6378,28 @@
 		)
 		(property "Description" "Unpolarized capacitor, small symbol"
 			(at 34.29 106.68 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Manufacturer" "KEMET"
+			(at 34.29 106.68 90)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "MPN" "C0603C101J5GACTU"
+			(at 34.29 106.68 90)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -6181,6 +6489,28 @@
 				)
 			)
 		)
+		(property "Manufacturer" "KEMET"
+			(at 67.31 124.46 90)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "MPN" "C0603C222J5GACTU"
+			(at 67.31 124.46 90)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
 		(pin "2"
 			(uuid "c2201664-132d-4b33-9994-691aa14e2cf3")
 		)
@@ -6254,6 +6584,28 @@
 			)
 		)
 		(property "Description" "Generic DC optocoupler with NPN phototransistor output, pins order: anode/cathode/emitter/collector"
+			(at 48.26 72.39 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Manufacturer" "Broadcom"
+			(at 48.26 72.39 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "MPN" "HCPL-817-30DE"
 			(at 48.26 72.39 0)
 			(hide yes)
 			(show_name no)
@@ -6429,6 +6781,28 @@
 				)
 			)
 		)
+		(property "Manufacturer" "ROHM"
+			(at 110.49 41.91 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "MPN" "ESR03EZPJ103"
+			(at 110.49 41.91 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
 		(pin "1"
 			(uuid "5434748f-ea09-448a-aa75-84c7cd293e75")
 		)
@@ -6500,6 +6874,28 @@
 		)
 		(property "Description" "Unpolarized capacitor, small symbol"
 			(at 36.83 124.46 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Manufacturer" "KEMET"
+			(at 36.83 124.46 90)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "MPN" "C0603C222J5GACTU"
+			(at 36.83 124.46 90)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -7382,6 +7778,28 @@
 				)
 			)
 		)
+		(property "Manufacturer" "Murata"
+			(at 116.84 63.5 90)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "MPN" "GRM188R61E106KA73D"
+			(at 116.84 63.5 90)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
 		(pin "1"
 			(uuid "655d107b-b0e1-4cad-95ca-7a2f9138e500")
 		)
@@ -7561,6 +7979,28 @@
 				)
 			)
 		)
+		(property "Manufacturer" "MDD (Microdiode Semiconductor)"
+			(at 60.96 74.93 180)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "MPN" "B5819W"
+			(at 60.96 74.93 180)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
 		(pin "2"
 			(uuid "92af5d90-58dc-4e76-98c8-1da3e02ae086")
 		)
@@ -7586,7 +8026,7 @@
 		(in_bom yes)
 		(on_board yes)
 		(in_pos_files yes)
-		(dnp no)
+		(dnp yes)
 		(uuid "ab239a08-3839-4ca4-b508-bcebf819ad65")
 		(property "Reference" "C1"
 			(at 106.68 46.9899 0)
@@ -7633,6 +8073,28 @@
 			)
 		)
 		(property "Description" "Unpolarized capacitor, small symbol"
+			(at 110.49 48.26 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Manufacturer" "KYOCERA AVX"
+			(at 110.49 48.26 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "MPN" "06035C104JAT2A"
 			(at 110.49 48.26 0)
 			(hide yes)
 			(show_name no)
@@ -7889,6 +8351,17 @@
 				)
 			)
 		)
+		(property "Manufacturer" "Fastron"
+			(at 36.83 116.84 90)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
 		(pin "2"
 			(uuid "cf1a161b-7f57-4eb7-8857-5ab278363215")
 		)
@@ -8037,6 +8510,28 @@
 		)
 		(property "Description" "Resistor, small symbol"
 			(at 52.07 120.65 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Manufacturer" "YAGEO"
+			(at 52.07 120.65 90)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "MPN" "RC0603FR-07470RL"
+			(at 52.07 120.65 90)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -8436,6 +8931,28 @@
 				)
 			)
 		)
+		(property "Manufacturer" "YAGEO"
+			(at 43.18 104.14 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "MPN" "RC0603FR-07330KL"
+			(at 43.18 104.14 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
 		(pin "1"
 			(uuid "e84432f0-6599-4185-93a9-931825ad5145")
 		)
@@ -8508,6 +9025,28 @@
 			)
 		)
 		(property "Description" "Resistor"
+			(at 35.56 80.01 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Manufacturer" "YAGEO"
+			(at 35.56 80.01 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "MPN" "RC0805FR-07220RL"
 			(at 35.56 80.01 0)
 			(hide yes)
 			(show_name no)

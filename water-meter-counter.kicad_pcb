@@ -146,7 +146,7 @@
 			(mirror no)
 			(drillshape 0)
 			(scaleselection 1)
-			(outputdirectory "/home/q425942/private/projects/water-meter-counter/")
+			(outputdirectory "")
 		)
 	)
 	(property "Revision" "2")
@@ -198,6 +198,32 @@
 			(effects
 				(font
 					(size 1.27 1.27)
+					(thickness 0.15)
+				)
+			)
+		)
+		(property "Manufacturer" "KEMET"
+			(at 0 0 0)
+			(unlocked yes)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "ce898262-3ce2-4797-930b-8566811172fb")
+			(effects
+				(font
+					(size 1 1)
+					(thickness 0.15)
+				)
+			)
+		)
+		(property "MPN" "C0603C101J5GACTU"
+			(at 0 0 0)
+			(unlocked yes)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "2d442ad5-75c1-43f4-a2b3-a685438c083c")
+			(effects
+				(font
+					(size 1 1)
 					(thickness 0.15)
 				)
 			)
@@ -286,7 +312,7 @@
 			(uuid "021d16b3-8288-44f8-82bc-e10d9b8b5cc1")
 		)
 		(embedded_fonts no)
-		(model "${KICAD9_3DMODEL_DIR}/Capacitor_SMD.3dshapes/C_0603_1608Metric.step"
+		(model "${KICAD10_3DMODEL_DIR}/Capacitor_SMD.3dshapes/C_0603_1608Metric.step"
 			(offset
 				(xyz 0 0 0)
 			)
@@ -353,6 +379,32 @@
 			(layer "F.SilkS")
 			(hide yes)
 			(uuid "59c1b7f9-7c5c-4fab-b59e-bc220b9ce840")
+			(effects
+				(font
+					(size 1 1)
+					(thickness 0.15)
+				)
+			)
+		)
+		(property "Manufacturer" "YAGEO"
+			(at 0 0 135)
+			(unlocked yes)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "35f2a0a1-0fc4-4789-91e5-3f9be3d00320")
+			(effects
+				(font
+					(size 1 1)
+					(thickness 0.15)
+				)
+			)
+		)
+		(property "MPN" "RC0603FR-07470RL"
+			(at 0 0 135)
+			(unlocked yes)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "9b17fb0c-c40c-45b5-bf00-87e430cfcab2")
 			(effects
 				(font
 					(size 1 1)
@@ -592,7 +644,7 @@
 			(uuid "c6a3109c-f338-42d5-a22b-99500fd93044")
 		)
 		(embedded_fonts no)
-		(model "${KICAD9_3DMODEL_DIR}/TestPoint.3dshapes/TestPoint_Keystone_5000-5004_Miniature.step"
+		(model "${KICAD10_3DMODEL_DIR}/TestPoint.3dshapes/TestPoint_Keystone_5000-5004_Miniature.step"
 			(offset
 				(xyz 0 0 0)
 			)
@@ -764,6 +816,32 @@
 				)
 			)
 		)
+		(property "Manufacturer" "KEMET"
+			(at 0 0 0)
+			(unlocked yes)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "5fa10b49-b1c3-433a-9e38-7aa90928354a")
+			(effects
+				(font
+					(size 1 1)
+					(thickness 0.15)
+				)
+			)
+		)
+		(property "MPN" "C0603C101J5GACTU"
+			(at 0 0 0)
+			(unlocked yes)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "b2bcc7b1-baa4-4aed-9d19-3eff3461ee8d")
+			(effects
+				(font
+					(size 1 1)
+					(thickness 0.15)
+				)
+			)
+		)
 		(property ki_fp_filters "C_*")
 		(path "/4515beff-1430-4b62-9ab0-94a335204382")
 		(sheetname "/")
@@ -848,7 +926,7 @@
 			(uuid "f3bc8d69-6953-4842-975e-18ea6a481304")
 		)
 		(embedded_fonts no)
-		(model "${KICAD9_3DMODEL_DIR}/Capacitor_SMD.3dshapes/C_0603_1608Metric.step"
+		(model "${KICAD10_3DMODEL_DIR}/Capacitor_SMD.3dshapes/C_0603_1608Metric.step"
 			(offset
 				(xyz 0 0 0)
 			)
@@ -914,12 +992,25 @@
 				)
 			)
 		)
-		(property "MPN" "SD103AW"
+		(property "MPN" "SS14MH"
 			(at 0 0 0)
 			(unlocked yes)
 			(layer "F.Fab")
 			(hide yes)
 			(uuid "9656f330-f225-48bb-8343-5622bc22c5f4")
+			(effects
+				(font
+					(size 1 1)
+					(thickness 0.15)
+				)
+			)
+		)
+		(property "Manufacturer" "Taiwan Semiconductor"
+			(at 0 0 0)
+			(unlocked yes)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "8c52ad9e-4eb2-4f6b-b87c-c292fe14ff80")
 			(effects
 				(font
 					(size 1 1)
@@ -1151,7 +1242,7 @@
 			(uuid "37f7e9ea-78b7-463f-9b6f-ada37109c969")
 		)
 		(embedded_fonts no)
-		(model "${KICAD9_3DMODEL_DIR}/Diode_SMD.3dshapes/D_SOD-123F.step"
+		(model "${KICAD10_3DMODEL_DIR}/Diode_SMD.3dshapes/D_SOD-123F.step"
 			(offset
 				(xyz 0 0 0)
 			)
@@ -1218,6 +1309,32 @@
 			(layer "F.SilkS")
 			(hide yes)
 			(uuid "8d031435-e5da-4702-b94a-5b7cfcf1c911")
+			(effects
+				(font
+					(size 1 1)
+					(thickness 0.15)
+				)
+			)
+		)
+		(property "Manufacturer" "KEMET"
+			(at 0 0 120)
+			(unlocked yes)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "4fcedb11-31ef-4a44-a886-656ea4204061")
+			(effects
+				(font
+					(size 1 1)
+					(thickness 0.15)
+				)
+			)
+		)
+		(property "MPN" "C0603C222J5GACTU"
+			(at 0 0 120)
+			(unlocked yes)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "04d5c712-cf73-43a6-a895-f9f3f731df2e")
 			(effects
 				(font
 					(size 1 1)
@@ -1619,6 +1736,32 @@
 				)
 			)
 		)
+		(property "Manufacturer" "MDD (Microdiode Semiconductor)"
+			(at 0 0 90)
+			(unlocked yes)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "ac578ad8-3bf5-4cef-86be-d9e4c626e1f2")
+			(effects
+				(font
+					(size 1 1)
+					(thickness 0.15)
+				)
+			)
+		)
+		(property "MPN" "B5819W"
+			(at 0 0 90)
+			(unlocked yes)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "770ed1d3-87c1-481d-bdf8-def2ac5104a0")
+			(effects
+				(font
+					(size 1 1)
+					(thickness 0.15)
+				)
+			)
+		)
 		(property ki_fp_filters "TO-???* *_Diode_* *SingleDiode* D_*")
 		(path "/a4631c9b-25ef-447c-bbb3-866bbccd8e23")
 		(sheetname "/")
@@ -1843,7 +1986,7 @@
 			(uuid "e4462524-c371-40a7-b4ae-e31de024b9e8")
 		)
 		(embedded_fonts no)
-		(model "${KICAD9_3DMODEL_DIR}/Diode_SMD.3dshapes/D_SOD-123.step"
+		(model "${KICAD10_3DMODEL_DIR}/Diode_SMD.3dshapes/D_SOD-123.step"
 			(offset
 				(xyz 0 0 0)
 			)
@@ -1903,6 +2046,32 @@
 			(effects
 				(font
 					(size 1.27 1.27)
+					(thickness 0.15)
+				)
+			)
+		)
+		(property "Manufacturer" "YAGEO"
+			(at 0 0 270)
+			(unlocked yes)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "31a6a63c-1b32-4b98-96b1-08b1f788801d")
+			(effects
+				(font
+					(size 1 1)
+					(thickness 0.15)
+				)
+			)
+		)
+		(property "MPN" "RC0603FR-07330KL"
+			(at 0 0 270)
+			(unlocked yes)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "5192a71c-5553-432e-ae01-be3d9209a449")
+			(effects
+				(font
+					(size 1 1)
 					(thickness 0.15)
 				)
 			)
@@ -1991,7 +2160,7 @@
 			(uuid "933a34ae-e09a-4544-8b61-2ee81678b295")
 		)
 		(embedded_fonts no)
-		(model "${KICAD9_3DMODEL_DIR}/Resistor_SMD.3dshapes/R_0603_1608Metric.step"
+		(model "${KICAD10_3DMODEL_DIR}/Resistor_SMD.3dshapes/R_0603_1608Metric.step"
 			(offset
 				(xyz 0 0 0)
 			)
@@ -2058,6 +2227,32 @@
 			(layer "F.SilkS")
 			(hide yes)
 			(uuid "fec8a11d-f1fd-401e-916e-24a285d9cb2e")
+			(effects
+				(font
+					(size 1 1)
+					(thickness 0.15)
+				)
+			)
+		)
+		(property "Manufacturer" "KEMET"
+			(at 0 0 180)
+			(unlocked yes)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "d50cc3dc-0bbb-4da0-ac38-53e86a46b667")
+			(effects
+				(font
+					(size 1 1)
+					(thickness 0.15)
+				)
+			)
+		)
+		(property "MPN" "C0603C222J5GACTU"
+			(at 0 0 180)
+			(unlocked yes)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "46ed92a9-3b31-4b20-9619-0468ddea3b2d")
 			(effects
 				(font
 					(size 1 1)
@@ -2226,6 +2421,19 @@
 				)
 			)
 		)
+		(property "Manufacturer" "Fastron"
+			(at 0 0 120)
+			(unlocked yes)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "1bbbc891-82b0-4b37-ba6a-f1fc7ce00063")
+			(effects
+				(font
+					(size 1 1)
+					(thickness 0.15)
+				)
+			)
+		)
 		(property ki_fp_filters "Choke_* *Coil* Inductor_* L_*")
 		(path "/2701bcfa-8e43-4bb2-aac3-28680f22e4d1")
 		(sheetname "/")
@@ -2380,6 +2588,32 @@
 				)
 			)
 		)
+		(property "Manufacturer" "YAGEO"
+			(at 0 0 90)
+			(unlocked yes)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "5ab2d340-80e6-4e49-90c9-c170c47c9ed2")
+			(effects
+				(font
+					(size 1 1)
+					(thickness 0.15)
+				)
+			)
+		)
+		(property "MPN" "RC0603FR-07330KL"
+			(at 0 0 90)
+			(unlocked yes)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "73e8d3ae-e9a7-47e5-abcd-68d41fc0cb78")
+			(effects
+				(font
+					(size 1 1)
+					(thickness 0.15)
+				)
+			)
+		)
 		(property ki_fp_filters "R_*")
 		(path "/f496906b-b793-4fb4-bf46-8757f0395bf6")
 		(sheetname "/")
@@ -2464,7 +2698,7 @@
 			(uuid "59b68247-3cf8-4410-8fd5-e5bc1f52bac4")
 		)
 		(embedded_fonts no)
-		(model "${KICAD9_3DMODEL_DIR}/Resistor_SMD.3dshapes/R_0603_1608Metric.step"
+		(model "${KICAD10_3DMODEL_DIR}/Resistor_SMD.3dshapes/R_0603_1608Metric.step"
 			(offset
 				(xyz 0 0 0)
 			)
@@ -2534,6 +2768,19 @@
 			(layer "F.Fab")
 			(hide yes)
 			(uuid "eddd26fe-0f47-4fd9-81cb-148dad152a55")
+			(effects
+				(font
+					(size 1 1)
+					(thickness 0.15)
+				)
+			)
+		)
+		(property "Manufacturer" "Fastron"
+			(at 0 0 180)
+			(unlocked yes)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "76e49b4a-4ba9-403f-87b1-5e66eff526c1")
 			(effects
 				(font
 					(size 1 1)
@@ -2924,6 +3171,32 @@
 				)
 			)
 		)
+		(property "Manufacturer" "YAGEO"
+			(at 0 0 135)
+			(unlocked yes)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "6083765f-5d99-41a5-93e4-023a7f43a87a")
+			(effects
+				(font
+					(size 1 1)
+					(thickness 0.15)
+				)
+			)
+		)
+		(property "MPN" "RC0603FR-07470RL"
+			(at 0 0 135)
+			(unlocked yes)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "45ee4e86-e292-43e6-86f5-4121be4fb4d5")
+			(effects
+				(font
+					(size 1 1)
+					(thickness 0.15)
+				)
+			)
+		)
 		(property ki_fp_filters "R_*")
 		(path "/310db684-a1c6-49aa-9072-c887efd91e50")
 		(sheetname "/")
@@ -3181,12 +3454,25 @@
 				)
 			)
 		)
-		(property "MPN" "SD103AW"
+		(property "MPN" "SS14MH"
 			(at 0 0 270)
 			(unlocked yes)
 			(layer "F.Fab")
 			(hide yes)
 			(uuid "91afb548-cee5-4fa8-a60b-706c4fd211ca")
+			(effects
+				(font
+					(size 1 1)
+					(thickness 0.15)
+				)
+			)
+		)
+		(property "Manufacturer" "Taiwan Semiconductor"
+			(at 0 0 270)
+			(unlocked yes)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "cb147077-a715-497a-86cd-d09e65a86467")
 			(effects
 				(font
 					(size 1 1)
@@ -3418,7 +3704,7 @@
 			(uuid "25e44ee8-ddcf-4a34-a3cf-8d7e759e09c4")
 		)
 		(embedded_fonts no)
-		(model "${KICAD9_3DMODEL_DIR}/Diode_SMD.3dshapes/D_SOD-123F.step"
+		(model "${KICAD10_3DMODEL_DIR}/Diode_SMD.3dshapes/D_SOD-123F.step"
 			(offset
 				(xyz 0 0 0)
 			)
@@ -3485,6 +3771,32 @@
 			(layer "F.SilkS")
 			(hide yes)
 			(uuid "d455ad3b-a7e0-4956-991f-2b3efd492539")
+			(effects
+				(font
+					(size 1 1)
+					(thickness 0.15)
+				)
+			)
+		)
+		(property "Manufacturer" "YAGEO"
+			(at 0 0 0)
+			(unlocked yes)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "b4ca5f76-bb9a-4cad-b18f-3ce55ecef3ec")
+			(effects
+				(font
+					(size 1 1)
+					(thickness 0.15)
+				)
+			)
+		)
+		(property "MPN" "RC0603FR-07470RL"
+			(at 0 0 0)
+			(unlocked yes)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "a97f4872-b483-4823-9b9d-2610344c7f4a")
 			(effects
 				(font
 					(size 1 1)
@@ -3640,6 +3952,32 @@
 				)
 			)
 		)
+		(property "Manufacturer" "YAGEO"
+			(at 0 0 0)
+			(unlocked yes)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "9e6f8552-dd36-461b-ab43-166a71354d26")
+			(effects
+				(font
+					(size 1 1)
+					(thickness 0.15)
+				)
+			)
+		)
+		(property "MPN" "RC0603FR-07330KL"
+			(at 0 0 0)
+			(unlocked yes)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "5ec04455-d9f4-47a7-9b7d-879352c05350")
+			(effects
+				(font
+					(size 1 1)
+					(thickness 0.15)
+				)
+			)
+		)
 		(property ki_fp_filters "R_*")
 		(path "/652f032e-52cb-40f1-98b1-6b7f73a0818b")
 		(sheetname "/")
@@ -3724,7 +4062,7 @@
 			(uuid "8464a350-9deb-4581-87bf-1e3583c2e479")
 		)
 		(embedded_fonts no)
-		(model "${KICAD9_3DMODEL_DIR}/Resistor_SMD.3dshapes/R_0603_1608Metric.step"
+		(model "${KICAD10_3DMODEL_DIR}/Resistor_SMD.3dshapes/R_0603_1608Metric.step"
 			(offset
 				(xyz 0 0 0)
 			)
@@ -4019,7 +4357,7 @@
 			(uuid "6396970c-0a32-482b-8bba-1b323c97f74f")
 		)
 		(embedded_fonts no)
-		(model "${KICAD9_3DMODEL_DIR}/Connector_PinHeader_1.27mm.3dshapes/PinHeader_1x06_P1.27mm_Vertical.step"
+		(model "${KICAD10_3DMODEL_DIR}/Connector_PinHeader_1.27mm.3dshapes/PinHeader_1x06_P1.27mm_Vertical.step"
 			(offset
 				(xyz 0 0 0)
 			)
@@ -4081,6 +4419,32 @@
 			(effects
 				(font
 					(size 1.27 1.27)
+					(thickness 0.15)
+				)
+			)
+		)
+		(property "Manufacturer" "Broadcom"
+			(at 0 0 180)
+			(unlocked yes)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "8ddb4ebe-d8ea-444c-a3b4-841eaeea9e58")
+			(effects
+				(font
+					(size 1 1)
+					(thickness 0.15)
+				)
+			)
+		)
+		(property "MPN" "HCPL-817-30DE"
+			(at 0 0 180)
+			(unlocked yes)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "219d0381-9b21-4951-b553-dbb334e6b240")
+			(effects
+				(font
+					(size 1 1)
 					(thickness 0.15)
 				)
 			)
@@ -4304,7 +4668,7 @@
 			(uuid "77c8339c-e618-4af8-9e51-46f65cf3c66a")
 		)
 		(embedded_fonts no)
-		(model "${KICAD9_3DMODEL_DIR}/Package_SO.3dshapes/SSO-4_6.7x5.1mm_P2.54mm_Clearance8mm.step"
+		(model "${KICAD10_3DMODEL_DIR}/Package_SO.3dshapes/SSO-4_6.7x5.1mm_P2.54mm_Clearance8mm.step"
 			(offset
 				(xyz 0 0 0)
 			)
@@ -4593,6 +4957,32 @@
 			(effects
 				(font
 					(size 1.27 1.27)
+					(thickness 0.15)
+				)
+			)
+		)
+		(property "Manufacturer" "Microchip"
+			(at 0 0 225)
+			(unlocked yes)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "514e8d43-8326-4e3f-9472-be664eac9c2a")
+			(effects
+				(font
+					(size 1 1)
+					(thickness 0.15)
+				)
+			)
+		)
+		(property "MPN" "PIC18F25K80-I/MM"
+			(at 0 0 225)
+			(unlocked yes)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "8f292e41-780d-452d-81d2-96da62fa58d1")
+			(effects
+				(font
+					(size 1 1)
 					(thickness 0.15)
 				)
 			)
@@ -5017,7 +5407,7 @@
 			(roundrect_rratio 0.25)
 			(net "Net-(U1-Vcap)")
 			(pinfunction "Vcap_3")
-			(pintype "power_in")
+			(pintype "power_out")
 			(uuid "87aea0bd-0c3d-4a2f-855c-63c184b74b0e")
 		)
 		(pad "4" smd roundrect
@@ -5077,7 +5467,7 @@
 			(roundrect_rratio 0.25)
 			(net "unconnected-(U1-SOSCI{slash}RC1-Pad9)")
 			(pinfunction "SOSCI/RC1_9")
-			(pintype "bidirectional")
+			(pintype "bidirectional+no_connect")
 			(uuid "e840b900-d539-44a7-a564-b6ebfb806da6")
 		)
 		(pad "10" smd roundrect
@@ -5282,7 +5672,7 @@
 			(uuid "04a0b56c-a9bc-4ac7-8dc0-d9a1327bb9dc")
 		)
 		(embedded_fonts no)
-		(model "${KICAD9_3DMODEL_DIR}/Package_DFN_QFN.3dshapes/QFN-28-1EP_6x6mm_P0.65mm_EP4.25x4.25mm.step"
+		(model "${KICAD10_3DMODEL_DIR}/Package_DFN_QFN.3dshapes/QFN-28-1EP_6x6mm_P0.65mm_EP4.25x4.25mm.step"
 			(offset
 				(xyz 0 0 0)
 			)
@@ -5536,7 +5926,7 @@
 			(uuid "98a1e89d-7c9f-4cd9-91b9-97e849196e49")
 		)
 		(embedded_fonts no)
-		(model "${KICAD9_3DMODEL_DIR}/TestPoint.3dshapes/TestPoint_Keystone_5000-5004_Miniature.step"
+		(model "${KICAD10_3DMODEL_DIR}/TestPoint.3dshapes/TestPoint_Keystone_5000-5004_Miniature.step"
 			(offset
 				(xyz 0 0 0)
 			)
@@ -5603,6 +5993,32 @@
 			(layer "F.SilkS")
 			(hide yes)
 			(uuid "25891cd9-681a-487a-b722-0ea92a41ce99")
+			(effects
+				(font
+					(size 1 1)
+					(thickness 0.15)
+				)
+			)
+		)
+		(property "Manufacturer" "ROHM"
+			(at 0 0 315)
+			(unlocked yes)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "d5de0344-0626-4f0a-ab87-a453db1fe5fe")
+			(effects
+				(font
+					(size 1 1)
+					(thickness 0.15)
+				)
+			)
+		)
+		(property "MPN" "ESR03EZPJ103"
+			(at 0 0 315)
+			(unlocked yes)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "5d18d58e-dc64-4e3b-b909-5ce204af2fe4")
 			(effects
 				(font
 					(size 1 1)
@@ -5872,6 +6288,32 @@
 				)
 			)
 		)
+		(property "Manufacturer" "YAGEO"
+			(at 0 0 180)
+			(unlocked yes)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "4c922d55-1660-4e86-912f-f804c95760e9")
+			(effects
+				(font
+					(size 1 1)
+					(thickness 0.15)
+				)
+			)
+		)
+		(property "MPN" "RC0603FR-07330KL"
+			(at 0 0 180)
+			(unlocked yes)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "e20418be-ea69-4224-9e5d-4d38a6e2b5e7")
+			(effects
+				(font
+					(size 1 1)
+					(thickness 0.15)
+				)
+			)
+		)
 		(property ki_fp_filters "R_*")
 		(path "/2f4cf57c-c36f-4fb1-9d0e-6df107a7f9a2")
 		(sheetname "/")
@@ -5956,7 +6398,7 @@
 			(uuid "9bda73af-8a31-4349-b2b1-dd39a5e2fb2d")
 		)
 		(embedded_fonts no)
-		(model "${KICAD9_3DMODEL_DIR}/Resistor_SMD.3dshapes/R_0603_1608Metric.step"
+		(model "${KICAD10_3DMODEL_DIR}/Resistor_SMD.3dshapes/R_0603_1608Metric.step"
 			(offset
 				(xyz 0 0 0)
 			)
@@ -6341,6 +6783,32 @@
 				)
 			)
 		)
+		(property "Manufacturer" "JST"
+			(at 0 0 0)
+			(unlocked yes)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "b5af427d-3e23-4494-98a1-a7792cf05f56")
+			(effects
+				(font
+					(size 1 1)
+					(thickness 0.15)
+				)
+			)
+		)
+		(property "MPN" "S4B-XH-A(LF)(SN)"
+			(at 0 0 0)
+			(unlocked yes)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "3dacf0aa-053d-41a0-8f8b-657dfe1ab2de")
+			(effects
+				(font
+					(size 1 1)
+					(thickness 0.15)
+				)
+			)
+		)
 		(property ki_fp_filters "Connector*:*_1x??_*")
 		(path "/19cdd2a8-7499-4a6b-9080-3ead7338e6c2")
 		(sheetname "/")
@@ -6715,7 +7183,7 @@
 			(uuid "d451f3de-7ba1-4d95-bbef-a31b7cd99fb7")
 		)
 		(embedded_fonts no)
-		(model "${KICAD9_3DMODEL_DIR}/Connector_JST.3dshapes/JST_XH_S4B-XH-A_1x04_P2.50mm_Horizontal.step"
+		(model "${KICAD10_3DMODEL_DIR}/Connector_JST.3dshapes/JST_XH_S4B-XH-A_1x04_P2.50mm_Horizontal.step"
 			(offset
 				(xyz 0 0 0)
 			)
@@ -6782,6 +7250,32 @@
 			(layer "F.SilkS")
 			(hide yes)
 			(uuid "0ce2c08c-9bc9-4b9c-8855-aaf38205e483")
+			(effects
+				(font
+					(size 1 1)
+					(thickness 0.15)
+				)
+			)
+		)
+		(property "Manufacturer" "YAGEO"
+			(at 0 0 225)
+			(unlocked yes)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "821b7214-4448-427e-94af-02e354206574")
+			(effects
+				(font
+					(size 1 1)
+					(thickness 0.15)
+				)
+			)
+		)
+		(property "MPN" "RC0603FR-07470RL"
+			(at 0 0 225)
+			(unlocked yes)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "f1269ed2-83bf-4470-a9d4-53633e6c3ba9")
 			(effects
 				(font
 					(size 1 1)
@@ -7235,6 +7729,32 @@
 				)
 			)
 		)
+		(property "Manufacturer" "Murata"
+			(at 0 0 135)
+			(unlocked yes)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "4e34ee41-9b64-47e7-9c5b-47ee71f81227")
+			(effects
+				(font
+					(size 1 1)
+					(thickness 0.15)
+				)
+			)
+		)
+		(property "MPN" "GRM188R61E106KA73D"
+			(at 0 0 135)
+			(unlocked yes)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "cd229e74-3f5a-4f49-b52a-56e0fb06f973")
+			(effects
+				(font
+					(size 1 1)
+					(thickness 0.15)
+				)
+			)
+		)
 		(property ki_fp_filters "C_*")
 		(path "/a17f7cb2-a0b6-45c3-ba8f-e598ebf98674")
 		(sheetname "/")
@@ -7372,7 +7892,7 @@
 				)
 			)
 		)
-		(property "Description" "Unpolarized capacitor"
+		(property "Description" "Unpolarized capacitor, small symbol"
 			(at 0 0 135)
 			(layer "F.Fab")
 			(hide yes)
@@ -7395,6 +7915,32 @@
 				)
 			)
 		)
+		(property "Manufacturer" "KYOCERA AVX"
+			(at 0 0 315)
+			(unlocked yes)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "8b4d4a1e-e7bc-48cb-bac6-92f79d1de1d3")
+			(effects
+				(font
+					(size 1 1)
+					(thickness 0.15)
+				)
+			)
+		)
+		(property "MPN" "06035C104JAT2A"
+			(at 0 0 315)
+			(unlocked yes)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "9621cad6-ecc0-4cc2-b53c-29dac3e7972b")
+			(effects
+				(font
+					(size 1 1)
+					(thickness 0.15)
+				)
+			)
+		)
 		(property ki_fp_filters "C_*")
 		(path "/ab239a08-3839-4ca4-b508-bcebf819ad65")
 		(sheetname "/")
@@ -7405,7 +7951,7 @@
 				(pins "1" "2")
 			)
 		)
-		(attr smd)
+		(attr smd dnp)
 		(duplicate_pad_numbers_are_jumpers no)
 		(fp_line
 			(start -0.140581 0.51)
@@ -7548,6 +8094,32 @@
 			(layer "F.SilkS")
 			(hide yes)
 			(uuid "b6671ba3-6a7a-4b6e-972f-58b4b16f142c")
+			(effects
+				(font
+					(size 1 1)
+					(thickness 0.15)
+				)
+			)
+		)
+		(property "Manufacturer" "YAGEO"
+			(at 0 0 270)
+			(unlocked yes)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "2ca6b7ca-1904-4a90-af66-11b1c62c54c3")
+			(effects
+				(font
+					(size 1 1)
+					(thickness 0.15)
+				)
+			)
+		)
+		(property "MPN" "RC0603FR-07470RL"
+			(at 0 0 270)
+			(unlocked yes)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "39d1565b-a4ab-4e92-ace3-d44af5358c8e")
 			(effects
 				(font
 					(size 1 1)
@@ -7703,6 +8275,32 @@
 				)
 			)
 		)
+		(property "Manufacturer" "YAGEO"
+			(at 0 0 270)
+			(unlocked yes)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "8bd410ea-969c-431a-a299-2cb92b465628")
+			(effects
+				(font
+					(size 1 1)
+					(thickness 0.15)
+				)
+			)
+		)
+		(property "MPN" "RC0805FR-07220RL"
+			(at 0 0 270)
+			(unlocked yes)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "1c9d7222-1597-46e1-b9c8-53004cb3e7d2")
+			(effects
+				(font
+					(size 1 1)
+					(thickness 0.15)
+				)
+			)
+		)
 		(property ki_fp_filters "R_*")
 		(path "/fca0e646-87e8-4deb-b136-902a71804741")
 		(sheetname "/")
@@ -7787,7 +8385,7 @@
 			(uuid "12d8379a-7a63-49a8-8cce-8e918d9842eb")
 		)
 		(embedded_fonts no)
-		(model "${KICAD9_3DMODEL_DIR}/Resistor_SMD.3dshapes/R_0805_2012Metric.step"
+		(model "${KICAD10_3DMODEL_DIR}/Resistor_SMD.3dshapes/R_0805_2012Metric.step"
 			(offset
 				(xyz 0 0 0)
 			)
@@ -7805,7 +8403,7 @@
 		(at 134.8 110.2 180)
 		(descr "Open Source Hardware Symbol")
 		(tags "Logo Symbol OSHW")
-		(property "Reference" "REF**"
+		(property "Reference" "LOGO1"
 			(at 0 0 0)
 			(layer "B.SilkS")
 			(hide yes)
@@ -7859,7 +8457,7 @@
 				(justify mirror)
 			)
 		)
-		(attr exclude_from_pos_files exclude_from_bom allow_missing_courtyard)
+		(attr board_only exclude_from_pos_files exclude_from_bom allow_missing_courtyard)
 		(duplicate_pad_numbers_are_jumpers no)
 		(fp_poly
 			(pts
@@ -7992,7 +8590,7 @@
 				(justify mirror)
 			)
 		)
-		(property "Description" "Unpolarized capacitor"
+		(property "Description" "Unpolarized capacitor, small symbol"
 			(at 0 0 315)
 			(layer "B.Fab")
 			(hide yes)
@@ -8009,6 +8607,34 @@
 			(layer "B.SilkS")
 			(hide yes)
 			(uuid "3647978e-e8f6-41f7-8d11-567d1aaffad5")
+			(effects
+				(font
+					(size 1 1)
+					(thickness 0.15)
+				)
+				(justify mirror)
+			)
+		)
+		(property "Manufacturer" "KYOCERA AVX"
+			(at 0 0 135)
+			(unlocked yes)
+			(layer "B.Fab")
+			(hide yes)
+			(uuid "499222dd-c0f7-438e-add4-f0bb091ef7d4")
+			(effects
+				(font
+					(size 1 1)
+					(thickness 0.15)
+				)
+				(justify mirror)
+			)
+		)
+		(property "MPN" "06035C104JAT2A"
+			(at 0 0 135)
+			(unlocked yes)
+			(layer "B.Fab")
+			(hide yes)
+			(uuid "baf851a4-322e-4e97-b1f2-887f26967011")
 			(effects
 				(font
 					(size 1 1)
@@ -8122,7 +8748,7 @@
 		(at 164 107.6 180)
 		(descr "KiCad Logo")
 		(tags "Logo KiCad")
-		(property "Reference" "REF**"
+		(property "Reference" "LOGO2"
 			(at 0 5.08 0)
 			(layer "B.SilkS")
 			(hide yes)
@@ -8176,7 +8802,7 @@
 				(justify mirror)
 			)
 		)
-		(attr exclude_from_pos_files exclude_from_bom allow_missing_courtyard)
+		(attr board_only exclude_from_pos_files exclude_from_bom allow_missing_courtyard)
 		(duplicate_pad_numbers_are_jumpers no)
 		(fp_poly
 			(pts

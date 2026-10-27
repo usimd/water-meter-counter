@@ -94,7 +94,14 @@
                 "programoptions.testmodeentrymethod": "VDDFirst",
                 "programoptions.usehighvoltageonmclr": false,
                 "programoptions.uselvpprogramming": true,
-                "voltagevalue": "5.0"
+                "voltagevalue": "5.0",
+                "programoptions.ledbrightness": "1",
+                "programoptions.pgcconfig": "none",
+                "programoptions.pgcresistor.value": "50",
+                "programoptions.pgdconfig": "none",
+                "programoptions.pgdresistor.value": "50",
+                "bluetoothsetting": "off",
+                "programoptions.pgmentry.voltage": "low"
             }
         }
     ],
@@ -254,8 +261,8 @@
             "packs": [
                 {
                     "name": "PIC18F-K_DFP",
-                    "vendor": "Microchip",
-                    "version": "1.15.303"
+                    "version": "1.16.308",
+                    "vendor": "Microchip"
                 }
             ],
             "fileSet": "Project files",
