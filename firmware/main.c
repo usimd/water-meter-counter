@@ -5,7 +5,7 @@
  * Water meter counter firmware (PIC18F25K80, rev2 board).
  *
  * Counts rotations of the water meter's half-disc with two LC-tank sensors,
- * emits an S0 pulse on RB4 per forward rotation and logs to UART1
+ * emits an S0 pulse on RB4 per forward half rotation and logs to UART1
  * (RC6/RC7, 9600 8N1).
  */
 
@@ -88,13 +88,15 @@ int main(void)
     }
 
     while (1) {
-        int8_t direction = WaterMeter_Process();
+        int8_t step = WaterMeter_Process();
 
-        if (direction != 0) {
-            printf("%s fwd=%lu rev=%lu\r\n",
-                   (direction > 0) ? "FWD" : "REV",
-                   WaterMeter_GetForwardCount(),
-                   WaterMeter_GetReverseCount());
+        /* Counts are half revolutions, e.g. "FWD 1 fwd=7 rev=0". */
+        if (step != 0) {
+            printf("%s %d fwd=%lu rev=%lu\r\n",
+                   (step > 0) ? "FWD" : "REV",
+                   (step > 0) ? step : -step,
+                   WaterMeter_GetForwardHalfSteps(),
+                   WaterMeter_GetReverseHalfSteps());
         }
 
 #if DEBUG_STREAM

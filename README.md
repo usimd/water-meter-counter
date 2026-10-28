@@ -39,11 +39,22 @@ its sense pin with CVREF, and its output gates Timer1. Timer1 adds up how long t
 below the threshold. This is timed in hardware, so it reads the same after a wake from Sleep.
 
 - **Tank B** (CVREF 17/32 VDD) alternates once per revolution between a rest level and a higher
-  pass level (~107 and ~134 ticks of 0.25 µs on the bench). Each pass is one litre.
+  pass level (~107 and ~134 ticks of 0.25 µs on the bench). Each pass is one litre. The rest
+  level is tracked down quickly but up only slowly, so at a slow trickle the baseline cannot
+  follow B's ramp into the pass.
 - **Tank A** (CVREF 16/32 VDD) gives the direction. Its level changes in the middle of a B pass:
   A falling across the pass (~70 → ~60 ticks) means forward, rising means reverse.
 
-Each forward litre emits a 100 ms S0 pulse on RB4. Reverse rotations are counted but not output.
+Each revolution is counted in two half steps of 0.5 L: the B pass, and the rest phase between two
+passes. The rest phase is decided like the pass, mirrored: A recovers (rises) over a forward rest
+phase. Where A barely changes outside the pass, the next decided pass corrects the rest half step,
+so the total stays two half steps per litre. The halves are not equal in time: the pass covers
+about two thirds of a revolution, so the rate derived from single pulses jitters while the volume
+is exact.
+
+Each forward half step emits a 100 ms S0 pulse on RB4, so **1 pulse = 0.5 L (2000 pulses/m³)**.
+Pulses are queued and kept at least one sample apart. Reverse half steps are counted and have to
+be made up by forward ones before pulses resume, so the pulse total follows the net volume.
 If B sits in its pass level at power-up, that first pass is skipped while the baseline settles.
 
 The ADC is not used and stays off with its input selector on the unconnected RA0. The pin the
@@ -53,6 +64,41 @@ sat on it.
 
 Measured at 5 V with the production firmware: ~350 µA idle (no flow) and up to ~5 mA during an
 S0 pulse, when the CPU stays awake and the optocoupler LED is on.
+
+## Using it with ESPHome
+
+ESPHome's `pulse_meter` reads the S0 output directly. Replace the pin with the GPIO your S0 line
+is wired to. Enable the internal pull-up if the receiving board has no pull-up of its own.
+
+```yaml
+sensor:
+  - platform: pulse_meter
+    name: "Water flow"
+    pin:
+      number: GPIOxx
+      mode:
+        input: true
+        pullup: true
+    internal_filter: 50ms   # pulses are 100 ms long and at least ~170 ms apart
+    timeout: 3min           # report 0 L/min after this long without a pulse
+    unit_of_measurement: "L/min"
+    accuracy_decimals: 1
+    filters:
+      - multiply: 0.5       # pulses/min -> L/min
+      - throttle_average: 60s
+    total:
+      name: "Water total"
+      unit_of_measurement: "m³"
+      device_class: water
+      state_class: total_increasing
+      accuracy_decimals: 4
+      filters:
+        - multiply: 0.0005  # 1 pulse = 0.5 L
+```
+
+Pass and rest halves take different times, so the rate from single pulses jitters. The
+`throttle_average` filter smooths this out; the total is unaffected. For the Energy dashboard,
+use the total sensor. It restarts at 0 when the ESP reboots, which `total_increasing` handles.
 
 ## Lessons learned from rev1
 

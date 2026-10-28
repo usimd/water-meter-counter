@@ -42,18 +42,19 @@ typedef struct
 void WaterMeter_Initialize(void (*wait_for_sample)(void));
 
 /**
- * @brief Measure both tanks once and update the rotation decoder
+ * @brief Measure both tanks once, update the rotation decoder and the S0 output
  *
  * Call every ~70 ms (the decoder was tuned at 70..100 ms; it handles at
- * least ~9 samples per revolution). Forward rotations also emit a 100 ms S0
- * pulse.
+ * least ~9 samples per revolution). Each forward half revolution emits a
+ * 100 ms S0 pulse, after any reverse half revolutions have been made up.
  *
- * @return +1 forward rotation, -1 reverse rotation, 0 otherwise
+ * @return Half revolutions moved, forward positive, -2..+2
  */
 int8_t WaterMeter_Process(void);
 
-uint32_t WaterMeter_GetForwardCount(void);
-uint32_t WaterMeter_GetReverseCount(void);
+/** @brief Forward / reverse half revolutions since boot (not netted) */
+uint32_t WaterMeter_GetForwardHalfSteps(void);
+uint32_t WaterMeter_GetReverseHalfSteps(void);
 
 /** @brief Snapshot of the last measurement, for debugging/tuning */
 void WaterMeter_GetStatus(water_meter_status_t *status);

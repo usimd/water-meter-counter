@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
 /**
- * Rotation decoder: counts revolutions of the meter's half-disc from one
- * ring-down reading of each LC tank per sample.
+ * Rotation decoder: counts half revolutions of the meter's half-disc from
+ * one ring-down reading of each LC tank per sample.
  *
  * Hardware independent, so it can be compiled and tested on a host.
  *
@@ -15,6 +15,16 @@
  * (bench: ~69 -> ~57), in reverse the other way round. A pass that enters and
  * leaves over the same edge (a wobble) shows no difference and is not
  * counted.
+ *
+ * Each revolution is split into two half steps: the B pass and the rest
+ * phase between passes. The rest phase is decided the same way, mirrored: A
+ * recovers (rises) over a forward rest phase. Its half step is reported when
+ * the next pass enters and is corrected when that pass is decided, because
+ * a decided pass also tells from which side it was entered. A weak A
+ * contrast in the rest phase therefore only delays a half step until the
+ * pass ends; the total stays two half steps per revolution. The halves are
+ * not equal in time: with the bench thresholds the pass covers about two
+ * thirds of a revolution.
  */
 
 #ifndef ROTATION_DECODER_H
@@ -34,9 +44,11 @@ void RotationDecoder_Init(uint16_t baseline_b, uint16_t level_a, uint16_t level_
 
 /**
  * @brief Feed one sample pair
- * @return +1 for a forward revolution, -1 for reverse, 0 otherwise
+ * @return Half revolutions moved since the previous sample, forward
+ *         positive, -2..+2
  *
- * A revolution is reported when the B pass ends.
+ * Rest-phase half steps are reported when B enters a pass, pass half steps
+ * (and rest-phase corrections) when the pass ends.
  */
 int8_t RotationDecoder_Update(uint16_t level_a, uint16_t level_b);
 

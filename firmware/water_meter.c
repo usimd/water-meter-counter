@@ -33,16 +33,27 @@
 #define BASELINE_INIT_SAMPLES  7U  /* boot baseline = median, rejects the first-reading spike */
 
 /* S0 pulse length in TMR0 periods (100 ms). S0_Pulse restarts the period,
- * so the pulse lasts exactly this long (EN 62053-31 needs >= 30 ms). Counts
- * are >= 3 samples (~210 ms) apart, so pulses never merge. */
+ * so the pulse lasts exactly this long (EN 62053-31 needs >= 30 ms). One
+ * pulse per forward half revolution. A pulse starts only if none was active
+ * at the previous sample either, so pulses are >= one sample (~70 ms) apart
+ * and at most one starts every ~3 samples (~5 per second); the decoder
+ * reports half steps more slowly than that. */
 #define S0_PULSE_TICKS  1U
+#define S0_PENDING_MAX  UINT8_MAX
 
 static uint16_t ringdown_a;
 static uint16_t ringdown_b;
 static uint16_t boot_baseline_a;
-static uint32_t forward_count;
-static uint32_t reverse_count;
+static uint32_t forward_half_steps;
+static uint32_t reverse_half_steps;
 static volatile uint8_t s0_ticks_remaining;
+
+/* Reverse half steps not yet made up by forward ones. Forward half steps
+ * only queue S0 pulses once it is zero, so the pulses count net forward
+ * volume and a wobbling disc does not add pulses. */
+static uint32_t reverse_backlog;
+static uint8_t s0_pending;
+static bool s0_was_active;
 
 static void S0_TimerCallback(void)
 {
@@ -217,31 +228,56 @@ void WaterMeter_Initialize(void (*wait_for_sample)(void))
     RotationDecoder_Init(baseline_b, ringdown_a, ringdown_b);
 }
 
+static void CountHalfSteps(int8_t step)
+{
+    uint8_t forward;
+    uint8_t reverse;
+
+    if (step > 0) {
+        forward = (uint8_t)step;
+        forward_half_steps += forward;
+        while (forward > 0U) {
+            if (reverse_backlog > 0U) {
+                reverse_backlog--;
+            } else if (s0_pending < S0_PENDING_MAX) {
+                s0_pending++;
+            }
+            forward--;
+        }
+    } else if (step < 0) {
+        reverse = (uint8_t)-step;
+        reverse_half_steps += reverse;
+        if (reverse_backlog <= (UINT32_MAX - reverse)) {
+            reverse_backlog += reverse;
+        }
+    }
+}
+
 int8_t WaterMeter_Process(void)
 {
-    int8_t direction;
+    int8_t step;
 
     MeasureBoth();
-    direction = RotationDecoder_Update(ringdown_a, ringdown_b);
+    step = RotationDecoder_Update(ringdown_a, ringdown_b);
+    CountHalfSteps(step);
 
-    if (direction > 0) {
-        forward_count++;
+    if ((s0_pending > 0U) && !s0_was_active && !WaterMeter_IsS0PulseActive()) {
+        s0_pending--;
         S0_Pulse();
-    } else if (direction < 0) {
-        reverse_count++;
     }
+    s0_was_active = WaterMeter_IsS0PulseActive();
 
-    return direction;
+    return step;
 }
 
-uint32_t WaterMeter_GetForwardCount(void)
+uint32_t WaterMeter_GetForwardHalfSteps(void)
 {
-    return forward_count;
+    return forward_half_steps;
 }
 
-uint32_t WaterMeter_GetReverseCount(void)
+uint32_t WaterMeter_GetReverseHalfSteps(void)
 {
-    return reverse_count;
+    return reverse_half_steps;
 }
 
 void WaterMeter_GetStatus(water_meter_status_t *status)
